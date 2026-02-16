@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Eivo_androidtv" parent="Theme.AppCompat.DayNight.NoActionBar" />
+</resources>
