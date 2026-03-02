@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "eivo_androidtv"
 include(":app")
- 

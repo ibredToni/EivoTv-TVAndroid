@@ -24,6 +24,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.eivo_androidtv.ui.screens.profile.ProfileScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.repository.AuthRepositoryImpl
+import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
+import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
+import com.example.eivo_androidtv.ui.screens.linking.LinkingViewModel
+import com.example.eivo_androidtv.utils.okHttpClient
+import com.example.eivo_androidtv.utils.Constants
 
 sealed class Screen(val route: String) {
     object Linking : Screen("linking")
@@ -67,7 +75,17 @@ fun AppNavigation() {
         startDestination = Screen.Linking.route
     ) {
         composable(Screen.Linking.route) {
+            val apiService = remember { EivoApiService(okHttpClient, Constants.BASE_URL) }
+            val repository = remember { AuthRepositoryImpl(apiService) }
+            val getQrUseCase = remember { GetQrCodeUseCase(repository) }
+            val listenUseCase = remember { ListenLoginUseCase(repository) }
+
+            val linkingViewModel: LinkingViewModel = viewModel {
+                LinkingViewModel(getQrUseCase, listenUseCase)
+            }
+
             LoginLinkingScreen(
+                viewModel = linkingViewModel,
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Linking.route) { inclusive = true }

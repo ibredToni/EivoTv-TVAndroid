@@ -5,9 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -21,25 +19,45 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.ExperimentalTvMaterial3Api
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.example.eivo_androidtv.utils.generateRandomCode
+import com.example.eivo_androidtv.ui.components.QrImage
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.requestFocus
+import androidx.compose.foundation.focusable
+import com.example.eivo_androidtv.ui.components.FilterButton
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun LoginLinkingScreen(onNavigateToHome: () -> Unit) {
+fun LoginLinkingScreen(
+    onNavigateToHome: () -> Unit,
+    viewModel: LinkingViewModel
+) {
+    val state = viewModel.uiState
     val colorScheme = MaterialTheme.colorScheme
     val eivoColor = colorScheme.primary
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val screenWidthPx = configuration.screenWidthDp.toFloat() * androidx.compose.ui.platform.LocalDensity.current.density
     val dynamicRadius = screenWidthPx * 1.2f
+    val focusRequester = remember { FocusRequester() }
 
-    var pairingCode by remember { mutableStateOf("XFKFJDO56") }
+    LaunchedEffect(Unit) {
+        viewModel.loadQrAndListen()
+    }
 
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.Black)
-    ) {
+    LaunchedEffect(state.isLoggedIn) {
+        if (state.isLoggedIn) {
+            onNavigateToHome()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         Image(
             painter = painterResource(id = R.drawable.aficion),
             contentDescription = null,
@@ -75,65 +93,47 @@ fun LoginLinkingScreen(onNavigateToHome: () -> Unit) {
             )
 
             val textStyle = androidx.compose.ui.text.TextStyle(
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
             )
 
             Text(text = "Para vincular tu cuenta en esta TV\nescanea el código QR desde tu App de eivo", style = textStyle)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.qr),
-                contentDescription = "QR",
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.White, shape = RoundedCornerShape(4.dp))
-                    .padding(8.dp)
-            )
+            Box(
+                modifier = Modifier.size(160.dp).background(Color.White, shape = RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (state.uuid != null) {
+                    QrImage(text = state.uuid ?: "", modifier = Modifier.fillMaxSize())
+                } else {
+                    androidx.compose.material.CircularProgressIndicator(color = eivoColor)
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
-
             Text(text = "o introduce el código manualmente en tu App", style = textStyle)
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Box(
-                modifier = Modifier
-                    .width(200.dp)
-                    .border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.width(240.dp).border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
+                    .background(Color.Black.copy(alpha = 0.4f)).padding(all = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = pairingCode,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 4.sp,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    softWrap = false
+                    text = state.uuid ?: "Cargando...",
+                    color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp
                 )
             }
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            com.example.eivo_androidtv.ui.components.FilterButton(
-                text = "Generar código",
+            FilterButton(
+                text = "Generar nuevo código",
                 isActive = false,
-                onClick = { pairingCode = generateRandomCode(9) }
+                onClick = { viewModel.loadQrAndListen() },
+                modifier = Modifier.focusRequester(focusRequester)
             )
-
-            androidx.tv.material3.Button(
-                onClick = onNavigateToHome,
-                modifier = Modifier.padding(top = 10.dp)
-            ) {
-                Text("Ir a Home (Debug)")
-            }
         }
     }
 }
