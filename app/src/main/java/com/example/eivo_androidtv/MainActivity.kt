@@ -30,7 +30,7 @@ import com.example.eivo_androidtv.data.repository.AuthRepositoryImpl
 import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
 import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
 import com.example.eivo_androidtv.ui.screens.linking.LinkingViewModel
-import com.example.eivo_androidtv.utils.okHttpClient
+import com.example.eivo_androidtv.utils.createOkHttpClient
 import com.example.eivo_androidtv.utils.Constants
 
 sealed class Screen(val route: String) {
@@ -69,19 +69,22 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     val navController = rememberNavController()
     var globalRegion by remember { mutableStateOf("Baleares") }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val sessionManager = remember { com.example.eivo_androidtv.data.local.SessionManager(context) }
+    val customClient = remember { createOkHttpClient(sessionManager) }
+    val apiService = remember { EivoApiService(customClient, Constants.BASE_URL) }
 
     NavHost(
         navController = navController,
         startDestination = Screen.Linking.route
     ) {
         composable(Screen.Linking.route) {
-            val apiService = remember { EivoApiService(okHttpClient, Constants.BASE_URL) }
             val repository = remember { AuthRepositoryImpl(apiService) }
             val getQrUseCase = remember { GetQrCodeUseCase(repository) }
             val listenUseCase = remember { ListenLoginUseCase(repository) }
 
             val linkingViewModel: LinkingViewModel = viewModel {
-                LinkingViewModel(getQrUseCase, listenUseCase)
+                LinkingViewModel(getQrUseCase, listenUseCase, sessionManager)
             }
 
             LoginLinkingScreen(

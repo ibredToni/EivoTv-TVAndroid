@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
 import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
 import kotlinx.coroutines.launch
+import com.example.eivo_androidtv.data.local.SessionManager
 
 class LinkingViewModel(
     private val getQrCodeUseCase: GetQrCodeUseCase,
-    private val listenLoginUseCase: ListenLoginUseCase
+    private val listenLoginUseCase: ListenLoginUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     var uiState by mutableStateOf(LinkingUiState())
@@ -28,6 +30,7 @@ class LinkingViewModel(
                         .collect { authResult ->
                             android.util.Log.e("MERCURE_TEST", "¡Token recibido en VM!")
                             uiState = uiState.copy(isLoggedIn = true, token = authResult.token)
+                            sessionManager.saveAuthToken(authResult.token)
                         }
                 }
             } catch (e: Exception) {
