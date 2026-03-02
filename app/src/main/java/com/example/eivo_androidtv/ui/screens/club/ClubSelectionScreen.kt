@@ -24,6 +24,8 @@ import androidx.compose.ui.zIndex
 import androidx.tv.material3.*
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.network.MockApiService.getClubes
+import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.domain.model.ClubData
 import com.example.eivo_androidtv.ui.components.ProfileIcon
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
@@ -32,13 +34,24 @@ import com.example.eivo_androidtv.ui.components.BackgroundFoci
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ClubSelectionScreen(
-    selectedRegion: String,
+    selectedRegion: ComunidadDto?,
+    apiService: EivoApiService,
     onClubSelected: (String) -> Unit,
     onBackWithoutSelection: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    val clubs = remember(selectedRegion) {
-        getClubes(selectedRegion)
+    var clubs by remember { mutableStateOf<List<ClubData>>(emptyList()) }
+
+    LaunchedEffect(selectedRegion) {
+        if (selectedRegion != null) {
+            try {
+                // TODO: Implementar fetchClubs(regionId) en EivoApiService
+                // clubs = apiService.fetchClubs(selectedRegion.id)
+                android.util.Log.d("CLUBS", "Cargando clubes para: ${selectedRegion.name}")
+            } catch (e: Exception) {
+                android.util.Log.e("CLUBS_ERROR", "Error: ${e.message}")
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {

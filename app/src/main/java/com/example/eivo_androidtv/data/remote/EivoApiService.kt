@@ -14,26 +14,22 @@ import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
+import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.utils.Constants
 
 class EivoApiService(private val client: OkHttpClient, private val baseUrl: String) {
 
     private val json = Json { ignoreUnknownKeys = true }
-    private var lastCookie: String? = null
 
     suspend fun fetchRegisterTopic(): RegisterTopicResponseDto = withContext(Dispatchers.IO) {
         val request = Request.Builder()
-            .url("$baseUrl/tv/v1/register-topic")
+            .url("$baseUrl${Constants.ENDPOINT_REGISTER}")
             .header("Accept", "application/json")
             .build()
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Error: ${response.code}")
-
-            val cookieHeader = response.header("Set-Cookie")
-            if (cookieHeader != null) {
-                lastCookie = cookieHeader.split(";")[0] // Guardamos solo el valor
-            }
-
             val bodyString = response.body?.string() ?: ""
             json.decodeFromString<RegisterTopicResponseDto>(bodyString)
         }
@@ -41,7 +37,7 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
     fun observeMercure(topic: String): Flow<AuthPayloadDto> = callbackFlow {
         val sseUrl = baseUrl.toHttpUrl().newBuilder()
-            .addPathSegments(".well-known/mercure")
+            .addPathSegments(Constants.ENDPOINT_MERCURE)
             .addQueryParameter("topic", topic)
             .build()
 
@@ -49,11 +45,6 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
             .url(sseUrl)
             .header("Accept", "text/event-stream")
             .header("Cache-Control", "no-cache")
-
-        lastCookie?.let {
-            requestBuilder.header("Cookie", it)
-            android.util.Log.d("MERCURE_DEBUG", "Enviando Cookie manual: $it")
-        }
 
         val listener = object : EventSourceListener() {
             override fun onOpen(eventSource: EventSource, response: Response) {
@@ -88,5 +79,34 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
             .newEventSource(requestBuilder.build(), listener)
 
         awaitClose { eventSource.cancel() }
+    }
+
+    suspend fun fetchComunidades(): List<ComunidadDto> = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("$baseUrl${Constants.ENDPOINT_COMUNIDADES}")
+            .header("Accept", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Error en Comunidades: ${response.code}")
+
+            val bodyString = response.body?.string() ?: "[]"
+            json.decodeFromString<List<ComunidadDto>>(bodyString)
+        }
+    }
+
+    suspend fun fetchDeportes(communityId: String): List<DeporteDto> = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("$baseUrl${Constants.ENDPOINT_DEPORTES}")
+            .header("Accept", "application/json")
+            .header("community", communityId)
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Error en Deportes: ${response.code}")
+
+            val bodyString = response.body?.string() ?: "[]"
+            json.decodeFromString<List<DeporteDto>>(bodyString)
+        }
     }
 }

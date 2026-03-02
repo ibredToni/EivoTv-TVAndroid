@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import com.example.eivo_androidtv.ui.screens.profile.ProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.repository.AuthRepositoryImpl
 import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
 import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    var globalRegion by remember { mutableStateOf("Baleares") }
+    var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val sessionManager = remember { com.example.eivo_androidtv.data.local.SessionManager(context) }
     val customClient = remember { createOkHttpClient(sessionManager) }
@@ -99,6 +100,9 @@ fun AppNavigation() {
 
         composable(Screen.Home.route) {
             HomeScreen(
+                apiService = apiService,
+                selectedRegion = globalRegion,
+                onRegionSelected = { globalRegion = it },
                 onNavigateToMatches = { sport ->
                     navController.navigate("matches/$sport")
                 },
@@ -120,9 +124,10 @@ fun AppNavigation() {
 
             com.example.eivo_androidtv.ui.screens.matches.MatchesScreen(
                 initialSport = sport,
-                selectedRegion = globalRegion, // Pasamos el estado global
-                onRegionSelected = { globalRegion = it }, // Permitimos cambiarlo
-                filterClubId = selectedClubId, // Pasamos el ID del club seleccionado
+                selectedRegion = globalRegion,
+                onRegionSelected = { globalRegion = it },
+                filterClubId = selectedClubId,
+                apiService = apiService,
                 onNavigateToClubSelection = {
                     navController.navigate(Screen.ClubSelection.route)
                 },
@@ -138,7 +143,7 @@ fun AppNavigation() {
         composable(Screen.ClubSelection.route) {
             ClubSelectionScreen(
                 selectedRegion = globalRegion,
-
+                apiService = apiService,
                 onClubSelected = { clubId ->
                     navController.previousBackStackEntry?.savedStateHandle?.set("selectedClub", clubId)
                     navController.popBackStack()

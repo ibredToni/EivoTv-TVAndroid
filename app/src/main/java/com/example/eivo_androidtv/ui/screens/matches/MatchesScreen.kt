@@ -39,6 +39,7 @@ import com.example.eivo_androidtv.ui.components.ProfileIcon
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.onFocusChanged
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -46,42 +47,52 @@ import java.util.Locale
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import com.example.eivo_androidtv.data.network.MockApiService
+import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
+import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.FilterButton
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MatchesScreen(
     initialSport: String,
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit,
+    selectedRegion: ComunidadDto?,
+    onRegionSelected: (ComunidadDto) -> Unit,
     filterClubId: String? = null,
     onNavigateToClubSelection: () -> Unit,
     onClearClubFilter: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    apiService: EivoApiService,
 ) {
     var selectedSport by remember { mutableStateOf(initialSport) }
     var onlyDirectos by remember { mutableStateOf(false) }
+    var sports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
 
-    val regions = remember { MockApiService.getRegions() }
-    val sports = remember { MockApiService.getSports() }
+    LaunchedEffect(selectedRegion) {
+        selectedRegion?.let { region ->
+            try {
+                val fetched = apiService.fetchDeportes(region.id.toString())
+                sports = fetched
 
-    val matchesToShow = remember(selectedRegion, selectedSport, onlyDirectos, filterClubId) {
-        if (onlyDirectos) {
-            MockApiService.getDirectos(
-                idComunidad = selectedRegion,
-                idDeporte = selectedSport
-            )
-        } else {
-            MockApiService.getMatches(
-                idComunidad = selectedRegion,
-                idDeporte = selectedSport,
-                idClub = filterClubId
-            )
+                if (fetched.none { it.id.toString() == selectedSport } && fetched.isNotEmpty()) {
+                    selectedSport = fetched.first().id.toString()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MATCHES_ERROR", "Error: ${e.message}")
+            }
         }
     }
 
+    val currentSportName = sports.find { it.id.toString() == selectedSport }?.nombre ?: ""
+
+    val matchesToShow = remember(selectedRegion, selectedSport, onlyDirectos, filterClubId) {
+        // TODO: apiService.fetchMatches(selectedRegion?.id, selectedSport, onlyDirectos, filterClubId)
+        emptyList<com.example.eivo_androidtv.domain.model.MatchData>()
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        com.example.eivo_androidtv.ui.components.BackgroundFoci(Color(0xFF269091))
+        BackgroundFoci(Color(0xFF269091))
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
 
@@ -93,11 +104,13 @@ fun MatchesScreen(
                 Image(painterResource(id = R.drawable.ic_eivo_logo), null, Modifier.width(80.dp))
 
                 ChipGroup(
-                    items = sports,
-                    selectedItem = selectedSport,
-                    onItemSelected = {
-                        selectedSport = it
-                        onlyDirectos = false
+                    items = sports.map { it.nombre },
+                    selectedItem = currentSportName,
+                    onItemSelected = { nombre ->
+                        sports.find { it.nombre == nombre }?.let {
+                            selectedSport = it.id.toString()
+                            onlyDirectos = false
+                        }
                     },
                     modifier = Modifier.weight(1f).fillMaxWidth(0.5f)
                 )

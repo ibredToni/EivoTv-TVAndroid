@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,9 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.network.MockApiService
+import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
+import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.domain.model.BannerData
 import com.example.eivo_androidtv.domain.model.AdData
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
@@ -33,72 +37,118 @@ import com.example.eivo_androidtv.ui.components.ProfileIcon
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
+    apiService: EivoApiService,
+    selectedRegion: ComunidadDto?,
+    onRegionSelected: (ComunidadDto) -> Unit,
     onNavigateToMatches: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToPlayer: () -> Unit
 ) {
     val destacados = remember { MockApiService.getDestacados() }
     val adsHome = remember { MockApiService.getAds().filter { it.position == "home" } }
-    val regions = remember { MockApiService.getRegions() }
-    val sports = remember { MockApiService.getSports() }
+    var regions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
+    var sports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
 
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { destacados.size })
-
-    var selectedRegion by remember { mutableStateOf(regions.first()) }
-    var selectedSport by remember { mutableStateOf(sports.first()) }
+    var selectedSport by remember { mutableStateOf("") }
 
     val topBarFocusRequester = remember { FocusRequester() }
     val sportsChipFocusRequester = remember { FocusRequester() }
 
+    LaunchedEffect(Unit) {
+        try {
+            val fetchedRegions = apiService.fetchComunidades()
+            regions = fetchedRegions
+
+            if (selectedRegion == null && fetchedRegions.isNotEmpty()) {
+                onRegionSelected(fetchedRegions.first())
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HOME_ERROR", "Fallo al traer regiones: ${e.message}")
+        }
+    }
+
+    LaunchedEffect(selectedRegion) {
+        selectedRegion?.let { region ->
+            try {
+                sports = emptyList()
+
+                val fetchedSports = apiService.fetchDeportes(region.id.toString())
+                sports = fetchedSports
+
+                if (fetchedSports.isNotEmpty()) {
+                    selectedSport = fetchedSports.first().nombre
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HOME_ERROR", "Error al traer deportes: ${e.message}")
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
 
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
-            // ASIGNAMOS FOCO A LA BARRA SUPERIOR
-            Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
-                HomeTopBar(regions, selectedRegion, { selectedRegion = it }, onNavigateToProfile)
+        if (regions.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.White)
             }
+        } else {
+            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
+                Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
+                    HomeTopBar(
+                        regions = regions,
+                        selectedRegion = selectedRegion,
+                        onRegionSelected = onRegionSelected,
+                        onNavigateToProfile = onNavigateToProfile
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                HeroBanner(
-                    banners = destacados,
-                    pagerState = pagerState,
-                    modifier = Modifier.weight(0.72f),
-                    onBannerClick = onNavigateToPlayer,
-                    onMoveDown = { sportsChipFocusRequester.requestFocus() },
-                    onMoveUp = { topBarFocusRequester.requestFocus() } // SALTO ARRIBA
-                )
+                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    HeroBanner(
+                        banners = destacados,
+                        pagerState = pagerState,
+                        modifier = Modifier.weight(0.72f),
+                        onBannerClick = onNavigateToPlayer,
+                        onMoveDown = { sportsChipFocusRequester.requestFocus() },
+                        onMoveUp = { topBarFocusRequester.requestFocus() } // SALTO ARRIBA
+                    )
 
-                Spacer(modifier = Modifier.width(20.dp))
+                    Spacer(modifier = Modifier.width(20.dp))
 
-                RightSidebar(
-                    destacados = destacados,
-                    ads = adsHome,
-                    currentPagerIndex = pagerState.currentPage,
-                    modifier = Modifier.weight(0.28f)
-                )
-            }
+                    RightSidebar(
+                        destacados = destacados,
+                        ads = adsHome,
+                        currentPagerIndex = pagerState.currentPage,
+                        modifier = Modifier.weight(0.28f)
+                    )
+                }
 
-            Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
-                ChipGroup(
-                    items = sports,
-                    selectedItem = selectedSport,
-                    onItemSelected = { selectedSport = it; onNavigateToMatches(it) },
-                    modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
-                )
+                Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
+                    ChipGroup(
+                        items = sports.map { it.nombre },
+                        selectedItem = selectedSport,
+                        onItemSelected = { nombre ->
+                            selectedSport = nombre
+                            val deporteId = sports.find { it.nombre == nombre }?.id.toString()
+                            onNavigateToMatches(deporteId)
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                    )
+                }
             }
         }
+
     }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun HomeTopBar(
-    items: List<String>,
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit,
+    regions: List<ComunidadDto>,
+    selectedRegion: ComunidadDto?,
+    onRegionSelected: (ComunidadDto) -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     Row(
@@ -114,9 +164,11 @@ fun HomeTopBar(
         )
 
         ChipGroup(
-            items = items,
-            selectedItem = selectedRegion,
-            onItemSelected = onRegionSelected,
+            items = regions.map { it.name },
+            selectedItem = selectedRegion?.name ?: "",
+            onItemSelected = { nombre ->
+                regions.find { it.name == nombre }?.let { onRegionSelected(it) }
+            },
             modifier = Modifier.weight(1f).fillMaxWidth(0.5f)
         )
 
