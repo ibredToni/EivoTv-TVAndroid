@@ -21,6 +21,7 @@ object Constants {
 
     // Endpoints con parámetros dinámicos
     const val PATH_CLUBS = "$TV_V1/clubs" // Ejemplo: /tv/v1/clubs/{idDeporte}
-    const val PATH_DIRECTOS = "$TV_V1/directos" // Ejemplo: /tv/v1/directos/{sport}
+    const val PATH_DIRECTOS = "$TV_V1/directos" // Ejemplo: /tv/v1/directos/{sport}/{club?}
+    const val PATH_EVENTOS = "$TV_V1/eventos" // Ejemplo: /tv/v1/evento/{sport}/{date}/{club?}
     const val PATH_EVENTO_DETALLE = "$TV_V1/evento" // Ejemplo: /tv/v1/evento/{idEvento}
 }

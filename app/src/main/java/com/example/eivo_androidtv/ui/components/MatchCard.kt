@@ -21,17 +21,23 @@ import com.example.eivo_androidtv.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
-import com.example.eivo_androidtv.domain.model.MatchData
+import coil.compose.AsyncImage
+import com.example.eivo_androidtv.data.remote.dto.EventoDto
+import com.example.eivo_androidtv.utils.formatToTime
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MatchCard(
-    match: MatchData,
+    match: EventoDto,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val equipos = match.nombre.split(" - ")
+    val nombreLocal = equipos.getOrNull(0) ?: "Local"
+    val nombreVisitante = equipos.getOrNull(1) ?: "Visitante"
 
     Surface(
         onClick = onClick,
@@ -57,8 +63,8 @@ fun MatchCard(
                     .fillMaxWidth()
                     .aspectRatio(if (isFocused) 1.1f else 1.6f)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.portero),
+                AsyncImage(
+                    model = match.img_back ?: R.drawable.portero,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -72,30 +78,41 @@ fun MatchCard(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = match.escudoA),
-                        contentDescription = null,
-                        modifier = Modifier.size(if (isFocused) 45.dp else 35.dp),
-                        contentScale = ContentScale.Fit
-                    )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        AsyncImage(
+                            model = match.img_loc,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().scale(1.8f),
+                            contentScale = ContentScale.Fit,
+                            alpha = if (isFocused) 0.7f else 1f
+                        )
+                    }
 
-                    Text(
-                        text = " vs ",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                    Spacer(modifier = Modifier.width(30.dp))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        AsyncImage(
+                            model = match.img_vis,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize().scale(1.8f),
+                            contentScale = ContentScale.Fit,
+                            alpha = if (isFocused) 0.7f else 1f
+                        )
+                    }
 
-                    Image(
-                        painter = painterResource(id = match.escudoB),
-                        contentDescription = null,
-                        modifier = Modifier.size(if (isFocused) 45.dp else 35.dp),
-                        contentScale = ContentScale.Fit
-                    )
+
                 }
-
-                if (match.isDirecto && !isFocused) {
+                //TODO Directos
+                /*if (match.isDirecto && !isFocused) {
                     Box(
                         modifier = Modifier
                             .padding(8.dp)
@@ -109,7 +126,7 @@ fun MatchCard(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                }
+                }*/
 
                 if (isFocused) {
                     Column(
@@ -118,7 +135,7 @@ fun MatchCard(
                             .padding(12.dp)
                     ) {
                         Text(
-                            text = "${match.teamA.uppercase()}\n${match.teamB.uppercase()}",
+                            text = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}",
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Black,
@@ -126,13 +143,15 @@ fun MatchCard(
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
-                            text = match.category,
+                            text = match.descripcion,
                             color = Color.White,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Text(
-                            text = match.date,
+                            text = formatToTime(match.inicio),
                             color = Color.White.copy(alpha = 0.8f),
                             fontSize = 11.sp
                         )
@@ -147,7 +166,7 @@ fun MatchCard(
                         .padding(top = 8.dp, bottom = 4.dp)
                 ) {
                     Text(
-                        text = match.category,
+                        text = match.descripcion,
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
@@ -155,7 +174,7 @@ fun MatchCard(
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                     Text(
-                        text = match.date,
+                        text = formatToTime(match.inicio),
                         color = Color.White,
                         fontSize = 12.sp
                     )

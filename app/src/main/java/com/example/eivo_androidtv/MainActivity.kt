@@ -154,18 +154,20 @@ fun AppNavigation() {
         }
 
         composable(Screen.Matches.route) { backStackEntry ->
-            val sport = backStackEntry.arguments?.getString("sport") ?: ""
+            val sportIdFromRoute = backStackEntry.arguments?.getString("sport") ?: globalSportId
 
             val selectedClubId by backStackEntry.savedStateHandle
                 .getStateFlow<String?>("selectedClub", null)
                 .collectAsStateWithLifecycle()
 
             com.example.eivo_androidtv.ui.screens.matches.MatchesScreen(
-                initialSport = sport,
+                initialSport = sportIdFromRoute,
                 selectedRegion = globalRegion,
                 onRegionSelected = { globalRegion = it },
                 filterClubId = selectedClubId,
                 apiService = apiService,
+                sports = globalSports,
+                onSportSelected = { globalSportId = it },
                 onNavigateToClubSelection = {
                     navController.navigate(Screen.ClubSelection.route)
                 },

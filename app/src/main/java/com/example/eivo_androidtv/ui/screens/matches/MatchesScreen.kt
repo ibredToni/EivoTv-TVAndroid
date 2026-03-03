@@ -50,6 +50,7 @@ import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.FilterButton
 
@@ -64,32 +65,37 @@ fun MatchesScreen(
     onClearClubFilter: () -> Unit,
     onNavigateToProfile: () -> Unit,
     apiService: EivoApiService,
+    sports: List<DeporteDto>,
+    onSportSelected: (String) -> Unit
 ) {
-    var selectedSport by remember { mutableStateOf(initialSport) }
     var onlyDirectos by remember { mutableStateOf(false) }
-    var sports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var matches by remember { mutableStateOf<List<EventoDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedRegion) {
-        selectedRegion?.let { region ->
-            try {
-                val fetched = apiService.fetchDeportes(region.id.toString())
-                sports = fetched
+    LaunchedEffect(selectedRegion, initialSport, onlyDirectos, filterClubId, selectedDate) {
+        if (selectedRegion == null) return@LaunchedEffect
 
-                if (fetched.none { it.id.toString() == selectedSport } && fetched.isNotEmpty()) {
-                    selectedSport = fetched.first().id.toString()
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("MATCHES_ERROR", "Error: ${e.message}")
+        isLoading = true
+        try {
+            val communityId = selectedRegion.id.toString()
+
+            val result = if (onlyDirectos) {
+                apiService.fetchDirectos(communityId, initialSport, filterClubId)
+            } else {
+                val formattedDate = selectedDate.toString()
+                apiService.fetchEventos(communityId, initialSport, formattedDate, filterClubId)
             }
+            matches = result
+        } catch (e: Exception) {
+            android.util.Log.e("MATCHES_ERROR", "Fallo al cargar partidos: ${e.message}")
+            matches = emptyList()
+        } finally {
+            isLoading = false
         }
     }
 
-    val currentSportName = sports.find { it.id.toString() == selectedSport }?.nombre ?: ""
-
-    val matchesToShow = remember(selectedRegion, selectedSport, onlyDirectos, filterClubId) {
-        // TODO: apiService.fetchMatches(selectedRegion?.id, selectedSport, onlyDirectos, filterClubId)
-        emptyList<com.example.eivo_androidtv.domain.model.MatchData>()
-    }
+    val currentSportName = sports.find { it.id.toString() == initialSport }?.nombre ?: ""
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
@@ -108,7 +114,7 @@ fun MatchesScreen(
                     selectedItem = currentSportName,
                     onItemSelected = { nombre ->
                         sports.find { it.nombre == nombre }?.let {
-                            selectedSport = it.id.toString()
+                            onSportSelected(it.id.toString())
                             onlyDirectos = false
                         }
                     },
@@ -123,18 +129,24 @@ fun MatchesScreen(
                 filterClub = filterClubId,
                 onClearClubFilter = onClearClubFilter,
                 onlyDirectos = onlyDirectos,
-                onToggleDirectos = { onlyDirectos = !onlyDirectos }
+                onToggleDirectos = { onlyDirectos = !onlyDirectos },
+                selectedDate = selectedDate,
+                onDateChange = { selectedDate = it }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (matchesToShow.isEmpty()) {
+            if (isLoading) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    androidx.compose.material.CircularProgressIndicator(color = Color.White)
+                }
+            } else if (matches.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     val emptyMessage = when {
-                        onlyDirectos -> "No hay partidos en directo en $selectedRegion para $selectedSport"
+                        onlyDirectos -> "No hay partidos en directo en ${selectedRegion?.name} para $currentSportName"
                         filterClubId != null -> "Este club no tiene partidos programados"
                         else -> "No hay partidos disponibles"
                     }
@@ -155,7 +167,7 @@ fun MatchesScreen(
                     contentPadding = PaddingValues(bottom = 48.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(matchesToShow) { match ->
+                    items(matches) { match ->
                         MatchCard(
                             match = match,
                             onClick = {  }
@@ -174,9 +186,10 @@ fun FilterSecondaryBar(
     filterClub: String?,
     onClearClubFilter: () -> Unit,
     onlyDirectos: Boolean,
-    onToggleDirectos: () -> Unit
+    onToggleDirectos: () -> Unit,
+    selectedDate: LocalDate,
+    onDateChange: (LocalDate) -> Unit
 ) {
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val hasClubFilter = filterClub != null
 
     Row(
@@ -197,19 +210,19 @@ fun FilterSecondaryBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
-                IconButtonArrow(R.drawable.ic_arrow_left) { selectedDate = selectedDate.minusDays(1) }
+                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
                 DateLabel(date = selectedDate.minusDays(1), isSelected = false)
                 DateLabel(date = selectedDate, isSelected = true)
                 DateLabel(date = selectedDate.plusDays(1), isSelected = false)
-                IconButtonArrow(R.drawable.ic_arrow_right) { selectedDate = selectedDate.plusDays(1) }
+                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
-                IconButtonArrow(R.drawable.ic_arrow_left) { selectedDate = selectedDate.minusMonths(1) }
+                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
                 Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
                     Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
-                IconButtonArrow(R.drawable.ic_arrow_right) { selectedDate = selectedDate.plusMonths(1) }
+                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
             }
         }
 
@@ -224,8 +237,13 @@ fun FilterSecondaryBar(
 }
 @Composable
 fun DateLabel(date: LocalDate, isSelected: Boolean) {
-    val dayName = if (isSelected) "HOY"
-    else date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es", "ES")).uppercase().replace(".", "")
+    val today = LocalDate.now()
+
+    val dayName = when {
+        date.isEqual(today) -> "HOY"
+        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es", "ES"))
+            .uppercase().replace(".", "")
+    }
 
     val label = "$dayName ${date.dayOfMonth}"
 
