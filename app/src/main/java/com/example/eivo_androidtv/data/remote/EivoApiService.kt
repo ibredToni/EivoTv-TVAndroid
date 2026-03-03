@@ -1,6 +1,7 @@
 package com.example.eivo_androidtv.data.remote
 
 import com.example.eivo_androidtv.data.remote.dto.AuthPayloadDto
+import com.example.eivo_androidtv.data.remote.dto.ClubDto
 import com.example.eivo_androidtv.data.remote.dto.RegisterTopicResponseDto
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -107,6 +108,26 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
             val bodyString = response.body?.string() ?: "[]"
             json.decodeFromString<List<DeporteDto>>(bodyString)
+        }
+    }
+
+
+    suspend fun fetchClubs(communityId: String, deporteId: String): List<ClubDto> = withContext(Dispatchers.IO) {
+        val url = "$baseUrl${Constants.PATH_CLUBS}/$deporteId"
+
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .header("community", communityId)
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw IOException("Error en Clubs: ${response.code}")
+            }
+
+            val bodyString = response.body?.string() ?: "[]"
+            json.decodeFromString<List<ClubDto>>(bodyString)
         }
     }
 }

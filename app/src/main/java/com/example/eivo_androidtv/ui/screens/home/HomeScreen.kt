@@ -40,50 +40,20 @@ fun HomeScreen(
     apiService: EivoApiService,
     selectedRegion: ComunidadDto?,
     onRegionSelected: (ComunidadDto) -> Unit,
+    sports: List<DeporteDto>,
+    selectedSportId: String,
+    onSportSelected: (String) -> Unit,
     onNavigateToMatches: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToPlayer: () -> Unit
+    onNavigateToPlayer: () -> Unit,
+    regions: List<ComunidadDto>
 ) {
     val destacados = remember { MockApiService.getDestacados() }
     val adsHome = remember { MockApiService.getAds().filter { it.position == "home" } }
-    var regions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
-    var sports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
-
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { destacados.size })
-    var selectedSport by remember { mutableStateOf("") }
-
     val topBarFocusRequester = remember { FocusRequester() }
     val sportsChipFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        try {
-            val fetchedRegions = apiService.fetchComunidades()
-            regions = fetchedRegions
-
-            if (selectedRegion == null && fetchedRegions.isNotEmpty()) {
-                onRegionSelected(fetchedRegions.first())
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("HOME_ERROR", "Fallo al traer regiones: ${e.message}")
-        }
-    }
-
-    LaunchedEffect(selectedRegion) {
-        selectedRegion?.let { region ->
-            try {
-                sports = emptyList()
-
-                val fetchedSports = apiService.fetchDeportes(region.id.toString())
-                sports = fetchedSports
-
-                if (fetchedSports.isNotEmpty()) {
-                    selectedSport = fetchedSports.first().nombre
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("HOME_ERROR", "Error al traer deportes: ${e.message}")
-            }
-        }
-    }
+    val selectedSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
@@ -128,11 +98,12 @@ fun HomeScreen(
                 Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
                     ChipGroup(
                         items = sports.map { it.nombre },
-                        selectedItem = selectedSport,
+                        selectedItem = selectedSportName,
                         onItemSelected = { nombre ->
-                            selectedSport = nombre
-                            val deporteId = sports.find { it.nombre == nombre }?.id.toString()
-                            onNavigateToMatches(deporteId)
+                            sports.find { it.nombre == nombre }?.let {
+                                onSportSelected(it.id.toString())
+                                onNavigateToMatches(it.id.toString())
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
                     )

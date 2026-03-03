@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import com.example.eivo_androidtv.ui.screens.profile.ProfileScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
+import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.repository.AuthRepositoryImpl
 import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
 import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
@@ -69,11 +71,42 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val sessionManager = remember { com.example.eivo_androidtv.data.local.SessionManager(context) }
     val customClient = remember { createOkHttpClient(sessionManager) }
     val apiService = remember { EivoApiService(customClient, Constants.BASE_URL) }
+
+    // --- ESTADO GLOBAL ---
+    var globalRegions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
+    var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
+    var globalSports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
+    var globalSportId by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        try {
+            val fetchedRegions = apiService.fetchComunidades()
+            globalRegions = fetchedRegions
+            if (globalRegion == null && fetchedRegions.isNotEmpty()) {
+                globalRegion = fetchedRegions.first()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("NAV_ERROR", "Error regiones: ${e.message}")
+        }
+    }
+
+    LaunchedEffect(globalRegion) {
+        globalRegion?.let { region ->
+            try {
+                val fetched = apiService.fetchDeportes(region.id.toString())
+                globalSports = fetched
+                if (globalSportId.isEmpty() && fetched.isNotEmpty()) {
+                    globalSportId = fetched.first().id.toString()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("NAV_ERROR", "Error cargando deportes: ${e.message}")
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -101,10 +134,15 @@ fun AppNavigation() {
         composable(Screen.Home.route) {
             HomeScreen(
                 apiService = apiService,
+                regions = globalRegions,
                 selectedRegion = globalRegion,
                 onRegionSelected = { globalRegion = it },
-                onNavigateToMatches = { sport ->
-                    navController.navigate("matches/$sport")
+                selectedSportId = globalSportId,
+                onSportSelected = { globalSportId = it },
+                sports = globalSports,
+                onNavigateToMatches = { sportId ->
+                    globalSportId = sportId //
+                    navController.navigate(Screen.Matches.createRoute(sportId))
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
@@ -144,10 +182,13 @@ fun AppNavigation() {
             ClubSelectionScreen(
                 selectedRegion = globalRegion,
                 apiService = apiService,
+                selectedSportId = globalSportId,
                 onClubSelected = { clubId ->
                     navController.previousBackStackEntry?.savedStateHandle?.set("selectedClub", clubId)
                     navController.popBackStack()
                 },
+                sports = globalSports,
+                onSportSelected = { globalSportId = it },
                 onBackWithoutSelection = {
                     navController.popBackStack()
                 },

@@ -25,34 +25,41 @@ import androidx.tv.material3.*
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.network.MockApiService.getClubes
 import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ClubDto
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.domain.model.ClubData
 import com.example.eivo_androidtv.ui.components.ProfileIcon
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.ui.components.ChipGroup
 
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ClubSelectionScreen(
     selectedRegion: ComunidadDto?,
+    selectedSportId: String,
     apiService: EivoApiService,
     onClubSelected: (String) -> Unit,
+    sports: List<DeporteDto>,
+    onSportSelected: (String) -> Unit,
     onBackWithoutSelection: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
-    var clubs by remember { mutableStateOf<List<ClubData>>(emptyList()) }
+    var clubs by remember { mutableStateOf<List<ClubDto>>(emptyList()) }
 
-    LaunchedEffect(selectedRegion) {
-        if (selectedRegion != null) {
+    LaunchedEffect(selectedRegion, selectedSportId) {
+        if (selectedRegion != null && selectedSportId.isNotEmpty()) {
             try {
-                // TODO: Implementar fetchClubs(regionId) en EivoApiService
-                // clubs = apiService.fetchClubs(selectedRegion.id)
-                android.util.Log.d("CLUBS", "Cargando clubes para: ${selectedRegion.name}")
-            } catch (e: Exception) {
-                android.util.Log.e("CLUBS_ERROR", "Error: ${e.message}")
-            }
+                clubs = apiService.fetchClubs(selectedRegion.id.toString(), selectedSportId)
+            } catch (e: Exception) { clubs = emptyList() }
         }
     }
+
+    val currentSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
@@ -64,6 +71,14 @@ fun ClubSelectionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Image(painterResource(id = R.drawable.ic_eivo_logo), null, Modifier.width(80.dp))
+                ChipGroup(
+                    items = sports.map { it.nombre },
+                    selectedItem = currentSportName,
+                    onItemSelected = { nombre ->
+                        sports.find { it.nombre == nombre }?.let { onSportSelected(it.id.toString()) }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
                 ProfileIcon(onNavigateToProfile = onNavigateToProfile)
             }
 
@@ -109,7 +124,12 @@ fun ClubSelectionScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(clubs) { club ->
-                    ClubSelectionItem(club = club, onClick = { onClubSelected(club.id) })
+                    ClubSelectionItem(
+                        name = club.name,
+                        imageUrl = club.image,
+                        fallbackUrl = club.fail,
+                        onClick = { onClubSelected(club.id.toString()) }
+                    )
                 }
             }
         }
@@ -118,8 +138,14 @@ fun ClubSelectionScreen(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun ClubSelectionItem(club: ClubData, onClick: () -> Unit) {
+private fun ClubSelectionItem(
+    name: String,
+    imageUrl: String,
+    fallbackUrl: String,
+    onClick: () -> Unit
+) {
     var isFocused by remember { mutableStateOf(false) }
+    var urlToLoad by remember(imageUrl) { mutableStateOf(imageUrl) }
 
     Column(
         modifier = Modifier
@@ -151,9 +177,18 @@ private fun ClubSelectionItem(club: ClubData, onClick: () -> Unit) {
                     .padding(4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = club.logoRes),
-                    contentDescription = club.name,
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(urlToLoad)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = name,
+                    onError = {
+                        if (urlToLoad != fallbackUrl) {
+                            urlToLoad = fallbackUrl
+                        }
+                    },
+                    placeholder = painterResource(id = R.drawable.ic_eivo_logo),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -163,7 +198,7 @@ private fun ClubSelectionItem(club: ClubData, onClick: () -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = club.name.uppercase(),
+            text = name.uppercase(),
             color = Color.White,
             fontSize = 12.sp,
             maxLines = 1,
