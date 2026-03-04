@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.data.remote.dto.DestacadoDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.utils.Constants
 
@@ -186,6 +187,20 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
             val bodyString = response.body?.string() ?: "[]"
             json.decodeFromString<List<EventoDto>>(bodyString)
+        }
+    }
+
+    suspend fun fetchDestacados(): List<DestacadoDto> = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("$baseUrl${Constants.ENDPOINT_DESTACADOS}")
+            .header("Accept", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Error en Destacados: ${response.code}")
+
+            val bodyString = response.body?.string() ?: "[]"
+            json.decodeFromString<List<DestacadoDto>>(bodyString)
         }
     }
 }

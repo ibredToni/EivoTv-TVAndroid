@@ -140,6 +140,7 @@ fun AppNavigation() {
                 selectedSportId = globalSportId,
                 onSportSelected = { globalSportId = it },
                 sports = globalSports,
+                sessionManager = sessionManager,
                 onNavigateToMatches = { sportId ->
                     globalSportId = sportId //
                     navController.navigate(Screen.Matches.createRoute(sportId))

@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.*
@@ -18,16 +20,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.eivo_androidtv.R
+import com.example.eivo_androidtv.data.local.SessionManager
 import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
+import com.example.eivo_androidtv.data.remote.dto.DestacadoDto
 import com.example.eivo_androidtv.domain.model.BannerData
 import com.example.eivo_androidtv.domain.model.AdData
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
@@ -46,14 +53,27 @@ fun HomeScreen(
     onNavigateToMatches: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToPlayer: () -> Unit,
-    regions: List<ComunidadDto>
+    regions: List<ComunidadDto>,
+    sessionManager: SessionManager,
 ) {
-    val destacados = remember { MockApiService.getDestacados() }
+    var destacados by remember { mutableStateOf<List<DestacadoDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
     val adsHome = remember { MockApiService.getAds().filter { it.position == "home" } }
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { destacados.size })
     val topBarFocusRequester = remember { FocusRequester() }
     val sportsChipFocusRequester = remember { FocusRequester() }
     val selectedSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
+    val token = remember { sessionManager.fetchAuthToken() ?: "" }
+
+    LaunchedEffect(Unit) {
+        try {
+            destacados = apiService.fetchDestacados()
+        } catch (e: Exception) {
+            android.util.Log.e("HOME_ERROR", "Error al cargar destacados: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
@@ -76,23 +96,31 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    HeroBanner(
-                        banners = destacados,
-                        pagerState = pagerState,
-                        modifier = Modifier.weight(0.72f),
-                        onBannerClick = onNavigateToPlayer,
-                        onMoveDown = { sportsChipFocusRequester.requestFocus() },
-                        onMoveUp = { topBarFocusRequester.requestFocus() } // SALTO ARRIBA
-                    )
+                    if (destacados.isNotEmpty()) {
+                        HeroBanner(
+                            banners = destacados,
+                            pagerState = pagerState,
+                            modifier = Modifier.weight(0.72f),
+                            onBannerClick = onNavigateToPlayer,
+                            onMoveDown = { sportsChipFocusRequester.requestFocus() },
+                            onMoveUp = { topBarFocusRequester.requestFocus() },
+                            token= token
+                        )
 
-                    Spacer(modifier = Modifier.width(20.dp))
+                        Spacer(modifier = Modifier.width(20.dp))
 
-                    RightSidebar(
-                        destacados = destacados,
-                        ads = adsHome,
-                        currentPagerIndex = pagerState.currentPage,
-                        modifier = Modifier.weight(0.28f)
-                    )
+                        RightSidebar(
+                            destacados = destacados,
+                            ads = adsHome,
+                            currentPagerIndex = pagerState.currentPage,
+                            modifier = Modifier.weight(0.28f),
+                            token = token
+                        )
+                    } else if (!isLoading) {
+                        Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                            Text("No hay contenido destacado", color = Color.Gray)
+                        }
+                    }
                 }
 
                 Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
@@ -150,15 +178,16 @@ fun HomeTopBar(
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun HeroBanner(
-    banners: List<BannerData>,
-    pagerState: androidx.compose.foundation.pager.PagerState,
+    banners: List<DestacadoDto>,
+    pagerState: PagerState,
     modifier: Modifier,
     onBannerClick: () -> Unit,
     onMoveDown: () -> Unit,
-    onMoveUp: () -> Unit
+    onMoveUp: () -> Unit,
+    token: String = "",
 ) {
     Box(modifier = modifier.fillMaxHeight()) {
-        androidx.compose.foundation.pager.HorizontalPager(
+        HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             beyondViewportPageCount = 1,
@@ -180,11 +209,23 @@ fun HeroBanner(
                 colors = SurfaceDefaults.colors(containerColor = Color.Black)
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Image(
-                        painter = painterResource(id = data.imageRes),
+                    LaunchedEffect(data.img) {
+                        android.util.Log.d("URL_CHECK", "Intentando cargar: ${data.img.trim()}")
+                    }
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(data.img.trim())
+
+                            .crossfade(true)
+                            .allowHardware(false)
+                            .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        error = painterResource(R.drawable.ic_eivo_logo),
+                        onError = { state ->
+                            android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
+                        }
                     )
 
                     Box(
@@ -203,17 +244,25 @@ fun HeroBanner(
                             .align(Alignment.BottomStart)
                             .padding(32.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(painter = painterResource(id = data.escudo1), contentDescription = null, modifier = Modifier.size(50.dp))
-                            Spacer(Modifier.width(16.dp))
-                            Image(painterResource(id = data.escudo2), contentDescription = null, modifier = Modifier.size(50.dp))
-                        }
-
-                        Spacer(Modifier.height(12.dp))
-
-                        Text(text = data.title, color = Color.White, fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)
-                        Text(text = data.category, color = Color.White.copy(alpha = 0.8f), fontSize = 18.sp)
-                        Text(text = data.date, color = Color.White.copy(alpha = 0.8f), fontSize = 18.sp)
+                        val displayTitle = data.nombre.replace(" - ", "\n")
+                        Text(
+                            text = displayTitle.uppercase(),
+                            color = Color.White,
+                            fontSize = if (displayTitle.contains("\n")) 28.sp else 38.sp,
+                            lineHeight = 34.sp,
+                            fontWeight = FontWeight.Black,
+                            maxLines = 3
+                        )
+                        Text(
+                            text = data.descripcion,
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 18.sp
+                        )
+                        Text(
+                            text = data.inicio,
+                            color = Color.White.copy(alpha = 0.8f),
+                            fontSize = 18.sp
+                        )
 
                         Spacer(modifier = Modifier.height(20.dp))
 
@@ -287,25 +336,29 @@ fun HeroBanner(
 
 @Composable
 fun RightSidebar(
-    destacados: List<BannerData>,
+    destacados: List<DestacadoDto>,
     ads: List<AdData>,
     currentPagerIndex: Int,
-    modifier: Modifier
+    modifier: Modifier,
+    token: String = ""
 ) {
     val nextDestacadoIndex = (currentPagerIndex + 1) % destacados.size
     val nextDestacado = destacados[nextDestacadoIndex]
 
     Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        SidebarItem(imageRes = nextDestacado.imageRes, modifier = Modifier.weight(1f))
+
+        if (nextDestacado != null) {
+            SidebarItem(imageUrl = nextDestacado.img, modifier = Modifier.weight(1f), token = token)
+        }
         ads.take(2).forEach { ad ->
-            SidebarItem(imageRes = ad.imageRes, modifier = Modifier.weight(1f))
+            SidebarItem(imageRes = ad.imageRes, modifier = Modifier.weight(1f), token = token)
         }
     }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun SidebarItem(imageRes: Int, modifier: Modifier) {
+fun SidebarItem(imageUrl: String? = null, imageRes: Int? = null, modifier: Modifier, token: String = "") {
     Surface(
         onClick = { },
         modifier = modifier.fillMaxWidth(),
@@ -322,11 +375,20 @@ fun SidebarItem(imageRes: Int, modifier: Modifier) {
             )
         )
     ) {
-        Image(
-            painter = painterResource(id = imageRes),
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl ?: imageRes)
+                .addHeader("Authorization", "Bearer $token")
+                .crossfade(true)
+                .build(),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            error = painterResource(R.drawable.ic_eivo_logo),
+            // AÑADE ESTO PARA VER EL ERROR EN LOGCAT
+            onError = { state ->
+                android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
+            }
         )
     }
 }
