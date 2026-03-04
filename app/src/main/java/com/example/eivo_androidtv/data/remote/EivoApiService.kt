@@ -1,5 +1,6 @@
 package com.example.eivo_androidtv.data.remote
 
+import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.AuthPayloadDto
 import com.example.eivo_androidtv.data.remote.dto.ClubDto
 import com.example.eivo_androidtv.data.remote.dto.RegisterTopicResponseDto
@@ -201,6 +202,20 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
             val bodyString = response.body?.string() ?: "[]"
             json.decodeFromString<List<DestacadoDto>>(bodyString)
+        }
+    }
+
+    suspend fun fetchAdverts(): List<AdDto> = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("$baseUrl${Constants.ENDPOINT_ADVERTS}")
+            .header("Accept", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Error en Anuncios: ${response.code}")
+
+            val bodyString = response.body?.string() ?: "[]"
+            json.decodeFromString<List<AdDto>>(bodyString)
         }
     }
 }
