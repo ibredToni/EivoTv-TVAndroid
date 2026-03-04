@@ -76,6 +76,10 @@ fun AppNavigation() {
     val customClient = remember { createOkHttpClient(sessionManager) }
     val apiService = remember { EivoApiService(customClient, Constants.BASE_URL) }
 
+    // --- ESTADO DE NAVEGACIÓN ---
+    val initialToken = remember { sessionManager.fetchAuthToken() }
+    var startRoute by remember { mutableStateOf(if (initialToken.isNullOrEmpty()) Screen.Linking.route else Screen.Home.route) }
+
     // --- ESTADO GLOBAL ---
     var globalRegions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
     var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
@@ -83,14 +87,23 @@ fun AppNavigation() {
     var globalSportId by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        try {
-            val fetchedRegions = apiService.fetchComunidades()
-            globalRegions = fetchedRegions
-            if (globalRegion == null && fetchedRegions.isNotEmpty()) {
-                globalRegion = fetchedRegions.first()
+        if (!initialToken.isNullOrEmpty()) {
+            try {
+                val fetchedRegions = apiService.fetchComunidades()
+                globalRegions = fetchedRegions
+                if (globalRegion == null && fetchedRegions.isNotEmpty()) {
+                    globalRegion = fetchedRegions.first()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("NAV_ERROR", "Token inválido o error de red: ${e.message}")
+
+                if (e.message?.contains("401") == true) {
+                    sessionManager.clearSession()
+                    navController.navigate(Screen.Linking.route) {
+                        popUpTo(0)
+                    }
+                }
             }
-        } catch (e: Exception) {
-            android.util.Log.e("NAV_ERROR", "Error regiones: ${e.message}")
         }
     }
 
@@ -110,7 +123,7 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Linking.route
+        startDestination = startRoute
     ) {
         composable(Screen.Linking.route) {
             val repository = remember { AuthRepositoryImpl(apiService) }
@@ -203,9 +216,10 @@ fun AppNavigation() {
 
         composable(Screen.Profile.route) {
             ProfileScreen(
+                sessionManager = sessionManager,
                 onNavigateToLogin = {
                     navController.navigate(Screen.Linking.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

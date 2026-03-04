@@ -21,16 +21,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
 import com.example.eivo_androidtv.R
+import com.example.eivo_androidtv.data.local.SessionManager
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigateToLogin: () -> Unit) {
+fun ProfileScreen(
+    onNavigateToLogin: () -> Unit,
+    sessionManager: SessionManager,) {
     var showUnlinkDialog by remember { mutableStateOf(false) }
 
     if (showUnlinkDialog) {
         UnlinkConfirmationScreen(
-            onConfirm = onNavigateToLogin,
+            onConfirm = {
+                sessionManager.clearSession()
+                onNavigateToLogin()
+            },
             onDismiss = { showUnlinkDialog = false }
         )
     } else {
