@@ -83,13 +83,23 @@ fun HomeScreen(
                 CircularProgressIndicator(color = Color.White)
             }
         } else {
+
+            LaunchedEffect(regions) {
+                if (regions.isNotEmpty()) {
+                    kotlinx.coroutines.yield()
+                    topBarFocusRequester.requestFocus()
+                    android.util.Log.d("FOCUS_DEBUG", "Foco solicitado a TopBar")
+                }
+            }
+
             Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
                 Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
                     HomeTopBar(
                         regions = regions,
                         selectedRegion = selectedRegion,
                         onRegionSelected = onRegionSelected,
-                        onNavigateToProfile = onNavigateToProfile
+                        onNavigateToProfile = onNavigateToProfile,
+                        modifier = Modifier.focusRequester(topBarFocusRequester)
                     )
                 }
 
@@ -148,7 +158,8 @@ fun HomeTopBar(
     regions: List<ComunidadDto>,
     selectedRegion: ComunidadDto?,
     onRegionSelected: (ComunidadDto) -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -244,7 +255,14 @@ fun HeroBanner(
                             .align(Alignment.BottomStart)
                             .padding(32.dp)
                     ) {
-                        val displayTitle = data.nombre.replace(" - ", "\n")
+
+                        val rawName = data.nombre
+                        val displayTitle = if (rawName.length > 23) {
+                            rawName.split("-").joinToString("\n") { it.trim() }
+                        } else {
+                            rawName
+                        }
+
                         Text(
                             text = displayTitle.uppercase(),
                             color = Color.White,
