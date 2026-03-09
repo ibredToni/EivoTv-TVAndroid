@@ -29,9 +29,11 @@ import androidx.tv.material3.*
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eivo_androidtv.R
+import com.example.eivo_androidtv.Screen
 import com.example.eivo_androidtv.data.local.SessionManager
 import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.DestacadoDto
@@ -40,6 +42,9 @@ import com.example.eivo_androidtv.domain.model.AdData
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.ChipGroup
 import com.example.eivo_androidtv.ui.components.ProfileIcon
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import android.os.Build
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -52,13 +57,13 @@ fun HomeScreen(
     onSportSelected: (String) -> Unit,
     onNavigateToMatches: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToPlayer: () -> Unit,
+    onNavigateToPlayer: (String) -> Unit,
     regions: List<ComunidadDto>,
     sessionManager: SessionManager,
 ) {
     var destacados by remember { mutableStateOf<List<DestacadoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    val adsHome = remember { MockApiService.getAds().filter { it.position == "home" } }
+    var adsHome by remember { mutableStateOf<List<AdDto>>(emptyList()) }
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { destacados.size })
     val topBarFocusRequester = remember { FocusRequester() }
     val sportsChipFocusRequester = remember { FocusRequester() }
@@ -68,6 +73,11 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         try {
             destacados = apiService.fetchDestacados()
+            val adsDeferred = apiService.fetchAdverts()
+
+            val posicionesValidas = listOf("home_1", "home_2")
+            adsHome = adsDeferred.filter { it.position in posicionesValidas }
+            android.util.Log.d("ADS_DEBUG", "Anuncios encontrados: ${adsHome.size}")
         } catch (e: Exception) {
             android.util.Log.e("HOME_ERROR", "Error al cargar destacados: ${e.message}")
         } finally {
@@ -111,7 +121,10 @@ fun HomeScreen(
                             banners = destacados,
                             pagerState = pagerState,
                             modifier = Modifier.weight(0.72f),
-                            onBannerClick = onNavigateToPlayer,
+                            onBannerClick = {
+                                val currentEventId = destacados[pagerState.currentPage].id.toString()
+                                onNavigateToPlayer(currentEventId)
+                            },
                             onMoveDown = { sportsChipFocusRequester.requestFocus() },
                             onMoveUp = { topBarFocusRequester.requestFocus() },
                             token= token
@@ -355,31 +368,69 @@ fun HeroBanner(
 @Composable
 fun RightSidebar(
     destacados: List<DestacadoDto>,
-    ads: List<AdData>,
+    ads: List<AdDto>,
     currentPagerIndex: Int,
     modifier: Modifier,
     token: String = ""
 ) {
+    val context = LocalContext.current
+
+    val gifImageLoader = remember {
+        coil.ImageLoader.Builder(context)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
+    val adHome = ads.find { it.position == "home_1" }
+    val adHome2 = ads.find { it.position == "home_2" }
     val nextDestacadoIndex = (currentPagerIndex + 1) % destacados.size
     val nextDestacado = destacados[nextDestacadoIndex]
 
     Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         if (nextDestacado != null) {
-            SidebarItem(imageUrl = nextDestacado.img, modifier = Modifier.weight(1f), token = token)
+            SidebarItem(
+                imageUrl = nextDestacado.img,
+                modifier = Modifier.weight(1f),
+                token = token,
+                imageLoader = gifImageLoader
+            )
         }
-        ads.take(2).forEach { ad ->
-            SidebarItem(imageRes = ad.imageRes, modifier = Modifier.weight(1f), token = token)
-        }
+        SidebarItem(
+            imageUrl = adHome?.url,
+            modifier = Modifier.weight(1f),
+            token = "",
+            imageLoader = gifImageLoader
+        )
+
+        SidebarItem(
+            imageUrl = adHome2?.url,
+            modifier = Modifier.weight(1f),
+            token = "",
+            imageLoader = gifImageLoader
+        )
     }
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun SidebarItem(imageUrl: String? = null, imageRes: Int? = null, modifier: Modifier, token: String = "") {
+fun SidebarItem(
+    imageUrl: String? = null,
+    imageRes: Int? = null,
+    modifier: Modifier,
+    token: String = "",
+    imageLoader: coil.ImageLoader
+) {
     Surface(
         onClick = { },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth(),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
         shape = ClickableSurfaceDefaults.shape(RectangleShape),
         colors = ClickableSurfaceDefaults.colors(
@@ -399,11 +450,12 @@ fun SidebarItem(imageUrl: String? = null, imageRes: Int? = null, modifier: Modif
                 .addHeader("Authorization", "Bearer $token")
                 .crossfade(true)
                 .build(),
+            imageLoader = imageLoader,
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             contentScale = ContentScale.Crop,
             error = painterResource(R.drawable.ic_eivo_logo),
-            // AÑADE ESTO PARA VER EL ERROR EN LOGCAT
             onError = { state ->
                 android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
             }

@@ -15,6 +15,8 @@ okhttpVersion = "4.12.0"
 kotlinxSerializationJson = "1.7.3"
 zxing = "3.5.3"
 coil = "2.6.0"
+exo_player = "1.2.0"
+okhttp = "1.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +39,11 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
+exo-player = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "exo_player" }
+exo-player-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "exo_player" }
+exo-player-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "exo_player" }
+okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "okhttp" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
