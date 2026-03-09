@@ -19,6 +19,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.DestacadoDto
+import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.data.remote.dto.ProfileResponseDto
 import com.example.eivo_androidtv.utils.Constants
@@ -232,6 +233,24 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
             val bodyString = response.body?.string() ?: throw IOException("Cuerpo vacío")
 
             val list = json.decodeFromString<List<ProfileResponseDto>>(bodyString)
+            list.first()
+        }
+    }
+
+    suspend fun fetchEventoDetalle(idEvento: String): EventoDetalleDto = withContext(Dispatchers.IO) {
+        val url = "$baseUrl${Constants.PATH_EVENTO_DETALLE}/$idEvento"
+
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Error en Detalle Evento: ${response.code}")
+
+            val bodyString = response.body?.string() ?: throw IOException("Cuerpo vacío")
+
+            val list = json.decodeFromString<List<EventoDetalleDto>>(bodyString)
             list.first()
         }
     }

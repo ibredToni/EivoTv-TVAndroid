@@ -12,17 +12,22 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
+import coil.compose.AsyncImage
 import com.example.eivo_androidtv.R
+import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun PauseScreen(onResume: () -> Unit) {
+fun PauseScreen(
+    onResume: () -> Unit,
+    detalle: EventoDetalleDto,) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,15 +91,44 @@ fun PauseScreen(onResume: () -> Unit) {
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(painterResource(id = R.drawable.escudo_1), null, Modifier.size(40.dp))
+                        android.util.Log.d("PAUSE_DEBUG", "Loc: ${detalle.img_loc} | Vis: ${detalle.img_vis}")
+                        AsyncImage(
+                            model = coil.request.ImageRequest.Builder(LocalContext.current)
+                                .data(detalle.img_loc)
+                                .crossfade(true)
+                                .listener(
+                                    onError = { _, result ->
+                                        android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
+                                    }
+                                )
+                                .build(),
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            contentScale = ContentScale.Fit,
+                            error = painterResource(id = R.drawable.escudo_1)
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Image(painterResource(id = R.drawable.escudo_2), null, Modifier.size(40.dp))
+                        AsyncImage(
+                            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                                .data(detalle.img_vis)
+                                .crossfade(true)
+                                .listener(
+                                    onError = { _, result ->
+                                        android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
+                                    }
+                                )
+                                .build(),
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            contentScale = ContentScale.Fit,
+                            error = painterResource(id = R.drawable.escudo_2)
+                        )
                     }
 
                     Spacer(Modifier.height(10.dp))
 
                     Text(
-                        text = "FORMENTERA\nvs ARTÀ",
+                        text = detalle.nombre?.uppercase() ?: "SIN NOMBRE",
                         color = Color.White,
                         fontSize = 18.sp,
                         lineHeight = 22.sp,
@@ -103,8 +137,14 @@ fun PauseScreen(onResume: () -> Unit) {
 
                     Spacer(Modifier.height(4.dp))
 
-                    Text("Amateur Reg. Pref.", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
-                    Text("Domingo 2 de nov. '25", color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp)
+                    Text(
+                        text = detalle.descripcion ?: "",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 10.sp)
+                    Text(
+                        text = detalle.inicio ?: "",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 9.sp)
 
                     Spacer(modifier = Modifier.height(14.dp))
 

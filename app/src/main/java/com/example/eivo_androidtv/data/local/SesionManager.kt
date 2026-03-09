@@ -15,6 +15,14 @@ class SessionManager(context: Context) {
         return prefs.getString("auth_token", null)
     }
 
+    fun saveCookie(cookie: String) {
+        prefs.edit().putString("auth_cookie", cookie).apply()
+    }
+
+    fun fetchCookie(): String? {
+        return prefs.getString("auth_cookie", null)
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }

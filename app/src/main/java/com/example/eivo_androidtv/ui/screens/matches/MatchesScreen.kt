@@ -2,6 +2,7 @@ package com.example.eivo_androidtv.ui.screens.matches
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,7 @@ fun MatchesScreen(
     onRegionSelected: (ComunidadDto) -> Unit,
     filterClubId: String? = null,
     onNavigateToClubSelection: () -> Unit,
+    onNavigateToPlayer: (String) -> Unit,
     onClearClubFilter: () -> Unit,
     onNavigateToProfile: () -> Unit,
     apiService: EivoApiService,
@@ -170,7 +172,9 @@ fun MatchesScreen(
                     items(matches) { match ->
                         MatchCard(
                             match = match,
-                            onClick = {  }
+                            onClick = {
+                                onNavigateToPlayer(match.id.toString())
+                            }
                         )
                     }
                 }
@@ -191,6 +195,8 @@ fun FilterSecondaryBar(
     onDateChange: (LocalDate) -> Unit
 ) {
     val hasClubFilter = filterClub != null
+    var isDateGroupFocused by remember { mutableStateOf(false) }
+    var isMonthGroupFocused by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -209,20 +215,41 @@ fun FilterSecondaryBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
-                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
-                DateLabel(date = selectedDate.minusDays(1), isSelected = false)
-                DateLabel(date = selectedDate, isSelected = true)
-                DateLabel(date = selectedDate.plusDays(1), isSelected = false)
-                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
-                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
-                Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                    Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier
+                    .onFocusChanged { isDateGroupFocused = it.hasFocus }
+                    .border(
+                        width = 2.dp,
+                        color = if (isDateGroupFocused) Color.White else Color.Transparent,
+                        shape = RectangleShape
+                    )
+                    .padding(5.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
+                    IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
+                    DateLabel(date = selectedDate.minusDays(1), isSelected = false)
+                    DateLabel(date = selectedDate, isSelected = true)
+                    DateLabel(date = selectedDate.plusDays(1), isSelected = false)
+                    IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
                 }
-                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
+            }
+            Box(
+                modifier = Modifier
+                    .onFocusChanged { isMonthGroupFocused = it.hasFocus }
+                    .border(
+                        width = 2.dp,
+                        color = if (isMonthGroupFocused) Color.White else Color.Transparent,
+                        shape = RectangleShape
+                    )
+                    .padding(5.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
+                    IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
+                    Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                    IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
+                }
             }
         }
 
@@ -271,6 +298,7 @@ fun IconButtonArrow(iconRes: Int, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         modifier = Modifier.size(32.dp),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         shape = ClickableSurfaceDefaults.shape(RectangleShape),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color(0xFFC0C0C0),
