@@ -240,6 +240,7 @@ fun AppNavigation() {
         composable(Screen.Profile.route) {
             ProfileScreen(
                 sessionManager = sessionManager,
+                apiService = apiService,
                 onNavigateToLogin = {
                     navController.navigate(Screen.Linking.route) {
                         popUpTo(0) { inclusive = true }

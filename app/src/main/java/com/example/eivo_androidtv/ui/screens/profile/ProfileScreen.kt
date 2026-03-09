@@ -20,16 +20,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
+import coil.compose.AsyncImage
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.local.SessionManager
+import com.example.eivo_androidtv.data.remote.EivoApiService
+import com.example.eivo_androidtv.data.remote.dto.ProfileResponseDto
+import com.example.eivo_androidtv.data.remote.dto.SuscripcionDto
+import com.example.eivo_androidtv.data.remote.dto.UserDataDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     onNavigateToLogin: () -> Unit,
-    sessionManager: SessionManager,) {
+    sessionManager: SessionManager,
+    apiService: EivoApiService
+) {
+    var profileData by remember { mutableStateOf<ProfileResponseDto?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
     var showUnlinkDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        try {
+            profileData = apiService.fetchUserProfile()
+        } catch (e: Exception) {
+            android.util.Log.e("PROFILE_ERROR", "Error: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
 
     if (showUnlinkDialog) {
         UnlinkConfirmationScreen(
@@ -61,7 +80,11 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(60.dp)
                 ) {
                     Column(modifier = Modifier.weight(1.1f)) {
-                        SubscriptionCard(modifier = Modifier.fillMaxWidth())
+                        SubscriptionCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            user = profileData?.user,
+                            suscripcion = profileData?.suscripciones?.firstOrNull()
+                        )
                         Spacer(modifier = Modifier.height(40.dp))
 
                         Text(
@@ -97,7 +120,11 @@ fun ProfileScreen(
                             }
                         }
                     }
-                    StatsSection(modifier = Modifier.weight(0.9f))
+                    StatsSection(
+                        modifier = Modifier.weight(0.9f),
+                        jornadas = profileData?.jornadas ?: 0,
+                        eventos = profileData?.eventos ?: 0
+                    )
                 }
             }
         }
@@ -206,19 +233,26 @@ fun DialogButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
 }
 
 @Composable
-fun StatsSection(modifier: Modifier) {
+fun StatsSection(
+    modifier: Modifier,
+    jornadas: Int,
+    eventos: Int
+) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(20.dp))
         Text("Disponible para mi", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(16.dp))
-        StatRow("Jornadas de tu equipo", "3")
-        StatRow("Resúmenes", "25")
-        StatRow("Jugadas favoritas", "8")
+        StatRow("Jornadas de tu equipo", jornadas.toString())
+        StatRow("Resúmenes", eventos.toString())
+        StatRow("Jugadas favoritas", "Mock")
     }
 }
 
 @Composable
-fun SubscriptionCard(modifier: Modifier) {
+fun SubscriptionCard(
+    modifier: Modifier,
+    user: UserDataDto?,
+    suscripcion: SuscripcionDto?) {
     Box(
         modifier = modifier
             .background(Color(0xFF1B1F27), RoundedCornerShape(8.dp))
@@ -231,7 +265,7 @@ fun SubscriptionCard(modifier: Modifier) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Tu suscripción", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text("jrebassaperello@gmail.com", color = Color.White, fontSize = 12.sp)
+                Text(user?.email ?: "", color = Color.White, fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -240,21 +274,41 @@ fun SubscriptionCard(modifier: Modifier) {
 
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("TU CLUB + TU LIGA", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                    Text(
+                        suscripcion?.nombre?.uppercase() ?: "SIN SUSCRIPCIÓN ACTIVA",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("C.E. Artà", color = Color.White, fontSize = 14.sp)
-                    Text("Cadete 1a Reg.", color = Color.White, fontSize = 14.sp)
+                    Text(
+                        suscripcion?.club ?: "",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        suscripcion?.categoria ?: "",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
                 }
 
-                Image(
-                    painter = painterResource(id = R.drawable.escudo_1),
+                AsyncImage(
+                    model = suscripcion?.escudo,
                     contentDescription = null,
-                    modifier = Modifier.size(60.dp)
+                    modifier = Modifier.size(60.dp),
+                    error = painterResource(R.drawable.ic_eivo_logo), // Logo por defecto si falla
+                    contentScale = ContentScale.Fit
                 )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Desde el 7/3/2023", color = Color.White, fontSize = 11.sp)
+            val fechaInicio = user?.start_sub_date ?: "No disponible"
+            Text(
+                "Desde el $fechaInicio",
+                color = Color.White,
+                fontSize = 11.sp
+            )
         }
     }
 }
