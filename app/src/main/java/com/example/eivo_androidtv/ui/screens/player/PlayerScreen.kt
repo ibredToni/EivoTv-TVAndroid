@@ -25,6 +25,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.media3.common.MimeTypes.APPLICATION_M3U8
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.utils.NetworkModule
 
 @Composable
@@ -40,6 +45,17 @@ fun PlayerScreen(
 
     val viewModel: PlayerViewModel = viewModel { PlayerViewModel(apiService, eventId) }
     var isPaused by remember { mutableStateOf(false) }
+    var ads by remember { mutableStateOf<List<AdDto>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val adsDeferred = apiService.fetchAdverts()
+
+            ads = adsDeferred.filter { it.position == "pause" }
+        } catch (e: Exception) {
+            android.util.Log.e("HOME_ERROR", "Error al cargar datos: ${e.message}")
+        }
+    }
 
     when (val state = viewModel.uiState) {
         is PlayerUiState.Loading -> {
@@ -53,16 +69,15 @@ fun PlayerScreen(
                 VideoPlayer(
                     url = state.detalle.url_hd ?: state.detalle.url_sd ?: "",
                     isPaused = isPaused,
-                    onPlayerStateChanged = { playing ->
-                        isPaused = !playing
-                    }
+                    onManualPauseToggle = { isPaused = it }
                 )
 
                 // 2. Capa de Pausa (Solo se ve si isPaused es true)
                 if (isPaused) {
                     PauseScreen(
                         detalle = state.detalle,
-                        onResume = { isPaused = false }
+                        onResume = { isPaused = false },
+                        ads = ads
                     )
                 }
             }
@@ -80,7 +95,7 @@ fun PlayerScreen(
 fun VideoPlayer(
     url: String,
     isPaused: Boolean,
-    onPlayerStateChanged: (Boolean) -> Unit
+    onManualPauseToggle: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val sessionManager = remember { com.example.eivo_androidtv.data.local.SessionManager(context) }
@@ -97,30 +112,28 @@ fun VideoPlayer(
                 "Sec-Fetch-Mode" to "cors"
             ))
 
-        val dataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(context, httpDataSourceFactory)
+        val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
 
         ExoPlayer.Builder(context)
-            .setMediaSourceFactory(androidx.media3.exoplayer.source.DefaultMediaSourceFactory(dataSourceFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .build().apply {
                 val mediaItem = MediaItem.Builder()
                     .setUri(url)
-                    .setMimeType(androidx.media3.common.MimeTypes.APPLICATION_M3U8)
+                    .setMimeType(APPLICATION_M3U8)
                     .build()
 
                 setMediaItem(mediaItem)
             prepare()
             playWhenReady = true
-
-            addListener(object : androidx.media3.common.Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    onPlayerStateChanged(isPlaying)
-                }
-                override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                    android.util.Log.e("EXO_ERROR", "Error en URL: $url")
-                    android.util.Log.e("EXO_ERROR", "Causa: ${error.cause?.message}")
-                    android.util.Log.e("EXO_ERROR", "URL intentada: $url")
-                }
-            })
+                addListener(object : Player.Listener {
+                    // Si el usuario pausa desde el controlador nativo (botón play/pause de la UI)
+                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                        if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST ||
+                            reason == Player.PLAY_WHEN_READY_CHANGE_REASON_REMOTE) {
+                            onManualPauseToggle(!playWhenReady)
+                        }
+                    }
+                })
         }
     }
 
@@ -138,19 +151,16 @@ fun VideoPlayer(
                 player = exoPlayer
                 useController = true
                 setBackgroundColor(android.graphics.Color.BLACK)
+                isFocusable = true
+                isFocusableInTouchMode = true
+                requestFocus()
             }
         },
-        modifier = Modifier
-            .fillMaxSize()
-            .focusable()
-            .onKeyEvent { keyEvent ->
-                if (keyEvent.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
-                    if (keyEvent.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER ||
-                        keyEvent.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
-                        if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
-                        true
-                    } else false
-                } else false
+        modifier = Modifier.fillMaxSize(),
+        update = { playerView ->
+            if (!isPaused) {
+                playerView.requestFocus()
             }
+        }
     )
 }

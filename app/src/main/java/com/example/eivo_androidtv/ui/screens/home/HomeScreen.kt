@@ -137,7 +137,10 @@ fun HomeScreen(
                             ads = adsHome,
                             currentPagerIndex = pagerState.currentPage,
                             modifier = Modifier.weight(0.28f),
-                            token = token
+                            token = token,
+                            onNextClick = { eventId ->
+                                onNavigateToPlayer(eventId)
+                            }
                         )
                     } else if (!isLoading) {
                         Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
@@ -371,7 +374,8 @@ fun RightSidebar(
     ads: List<AdDto>,
     currentPagerIndex: Int,
     modifier: Modifier,
-    token: String = ""
+    token: String = "",
+    onNextClick: (String) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -387,10 +391,24 @@ fun RightSidebar(
             .build()
     }
 
-    val adHome = ads.find { it.position == "home_1" }
-    val adHome2 = ads.find { it.position == "home_2" }
+    val adHome = remember(ads) { ads.filter { it.position == "home_1" } }
+    val adHome2 = remember(ads) { ads.filter { it.position == "home_2" } }
+    var currentAd1Index by remember { mutableIntStateOf(0) }
+    var currentAd2Index by remember { mutableIntStateOf(0) }
     val nextDestacadoIndex = (currentPagerIndex + 1) % destacados.size
     val nextDestacado = destacados[nextDestacadoIndex]
+
+    LaunchedEffect(adHome, adHome2) {
+        while (true) {
+            kotlinx.coroutines.delay(5000) // Cambia cada 5 segundos
+            if (adHome.isNotEmpty()) {
+                currentAd1Index = (currentAd1Index + 1) % adHome.size
+            }
+            if (adHome2.isNotEmpty()) {
+                currentAd2Index = (currentAd2Index + 1) % adHome2.size
+            }
+        }
+    }
 
     Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
@@ -399,21 +417,26 @@ fun RightSidebar(
                 imageUrl = nextDestacado.img,
                 modifier = Modifier.weight(1f),
                 token = token,
-                imageLoader = gifImageLoader
+                imageLoader = gifImageLoader,
+                isClickable = true,
+                onClick = { onNextClick(nextDestacado.id.toString()) }
             )
         }
+        val ad1ToShow = adHome.getOrNull(currentAd1Index)
         SidebarItem(
-            imageUrl = adHome?.url,
+            imageUrl = ad1ToShow?.url,
             modifier = Modifier.weight(1f),
             token = "",
-            imageLoader = gifImageLoader
+            imageLoader = gifImageLoader,
+            isClickable = false
         )
-
+        val ad2ToShow = adHome2.getOrNull(currentAd2Index)
         SidebarItem(
-            imageUrl = adHome2?.url,
+            imageUrl = ad2ToShow?.url,
             modifier = Modifier.weight(1f),
             token = "",
-            imageLoader = gifImageLoader
+            imageLoader = gifImageLoader,
+            isClickable = false
         )
     }
 }
@@ -425,40 +448,50 @@ fun SidebarItem(
     imageRes: Int? = null,
     modifier: Modifier,
     token: String = "",
-    imageLoader: coil.ImageLoader
+    imageLoader: coil.ImageLoader,
+    isClickable: Boolean = true,
+    onClick: () -> Unit = {}
 ) {
-    Surface(
-        onClick = { },
-        modifier = modifier
-            .fillMaxWidth(),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
-        shape = ClickableSurfaceDefaults.shape(RectangleShape),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.Transparent,
-            focusedContainerColor = Color.Transparent
-        ),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                border = BorderStroke(3.dp, Color.White),
-                shape = RectangleShape
+    if (isClickable) {
+        Surface(
+            onClick = onClick,
+            modifier = modifier.fillMaxWidth(),
+            scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
+            shape = ClickableSurfaceDefaults.shape(RectangleShape),
+            colors = ClickableSurfaceDefaults.colors(
+                containerColor = Color.Transparent,
+                focusedContainerColor = Color.Transparent
+            ),
+            border = ClickableSurfaceDefaults.border(
+                focusedBorder = Border(
+                    border = BorderStroke(3.dp, Color.White),
+                    shape = RectangleShape
+                )
             )
-        )
-    ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(imageUrl ?: imageRes)
-                .addHeader("Authorization", "Bearer $token")
-                .crossfade(true)
-                .build(),
-            imageLoader = imageLoader,
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            error = painterResource(R.drawable.ic_eivo_logo),
-            onError = { state ->
-                android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
-            }
-        )
+        ) {
+            SidebarImageContent(imageUrl, imageRes, token, imageLoader)
+        }
+    } else {
+        Box(modifier = modifier.fillMaxWidth()) {
+            SidebarImageContent(imageUrl, imageRes, token, imageLoader)
+        }
     }
+}
+
+@Composable
+fun SidebarImageContent(imageUrl: String?, imageRes: Int?, token: String, imageLoader: coil.ImageLoader) {
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl ?: imageRes)
+            .apply {
+                if (token.isNotEmpty()) addHeader("Authorization", "Bearer $token")
+            }
+            .crossfade(true)
+            .build(),
+        imageLoader = imageLoader,
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+        error = painterResource(R.drawable.ic_eivo_logo)
+    )
 }

@@ -6,11 +6,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -20,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
 import coil.compose.AsyncImage
 import com.example.eivo_androidtv.R
+import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 
@@ -27,7 +32,19 @@ import com.example.eivo_androidtv.ui.components.BackgroundFoci
 @Composable
 fun PauseScreen(
     onResume: () -> Unit,
-    detalle: EventoDetalleDto,) {
+    detalle: EventoDetalleDto,
+    ads: List<AdDto>
+) {
+
+    val pauseAd = ads.find { it.position == "pause" }
+
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100)
+        focusRequester.requestFocus()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -42,11 +59,12 @@ fun PauseScreen(
             )
 
             Box(modifier = Modifier.weight(0.68f).fillMaxHeight()) {
-                Image(
-                    painter = painterResource(id = R.drawable.philadelphia),
-                    contentDescription = null,
+                AsyncImage(
+                    model = pauseAd?.url,
+                    contentDescription = "Publicidad",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
+                    contentScale = ContentScale.FillBounds,
+                    error = painterResource(id = R.drawable.ic_eivo_logo)
                 )
 
                 Box(
@@ -157,7 +175,8 @@ fun PauseScreen(
                         ),
                         modifier = Modifier
                             .height(22.dp)
-                            .wrapContentWidth(),
+                            .wrapContentWidth()
+                            .focusRequester(focusRequester),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
