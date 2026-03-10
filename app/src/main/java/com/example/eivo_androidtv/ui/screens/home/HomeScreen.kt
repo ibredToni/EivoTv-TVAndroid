@@ -391,25 +391,16 @@ fun RightSidebar(
             .build()
     }
 
-    val adHome = remember(ads) { ads.filter { it.position == "home_1" } }
-    val adHome2 = remember(ads) { ads.filter { it.position == "home_2" } }
-    var currentAd1Index by remember { mutableIntStateOf(0) }
-    var currentAd2Index by remember { mutableIntStateOf(0) }
     val nextDestacadoIndex = (currentPagerIndex + 1) % destacados.size
     val nextDestacado = destacados[nextDestacadoIndex]
+    val adHomeList = remember(ads) { ads.filter { it.position == "home_1" } }
+    val adHome2List = remember(ads) { ads.filter { it.position == "home_2" } }
 
-    LaunchedEffect(adHome, adHome2) {
-        while (true) {
-            kotlinx.coroutines.delay(5000)
-            if (adHome.isNotEmpty()) {
-                currentAd1Index = (currentAd1Index + 1) % adHome.size
-            }
-
-            kotlinx.coroutines.delay(5000)
-            if (adHome2.isNotEmpty()) {
-                currentAd2Index = (currentAd2Index + 1) % adHome2.size
-            }
-        }
+    val ad1ToShow = remember(adHomeList) {
+        if (adHomeList.isNotEmpty()) adHomeList.random() else null
+    }
+    val ad2ToShow = remember(adHome2List) {
+        if (adHome2List.isNotEmpty()) adHome2List.random() else null
     }
 
     Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -426,39 +417,23 @@ fun RightSidebar(
         }
 
         Box(modifier = Modifier.weight(1f)) {
-            AnimatedContent(
-                targetState = adHome.getOrNull(currentAd1Index),
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(1000)) togetherWith fadeOut(animationSpec = tween(1000))
-                },
-                label = "Ad1Transition"
-            ) { ad ->
-                SidebarItem(
-                    imageUrl = ad?.url,
-                    modifier = Modifier.fillMaxSize(),
-                    token = "",
-                    imageLoader = gifImageLoader,
-                    isClickable = false
-                )
-            }
+            SidebarItem(
+                imageUrl = ad1ToShow?.url,
+                modifier = Modifier.fillMaxSize(),
+                token = "",
+                imageLoader = gifImageLoader,
+                isClickable = false
+            )
         }
 
         Box(modifier = Modifier.weight(1f)) {
-            AnimatedContent(
-                targetState = adHome2.getOrNull(currentAd2Index),
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(1000)) togetherWith fadeOut(animationSpec = tween(1000))
-                },
-                label = "Ad2Transition"
-            ) { ad ->
-                SidebarItem(
-                    imageUrl = ad?.url,
-                    modifier = Modifier.fillMaxSize(),
-                    token = "",
-                    imageLoader = gifImageLoader,
-                    isClickable = false
-                )
-            }
+            SidebarItem(
+                imageUrl = ad2ToShow?.url,
+                modifier = Modifier.fillMaxSize(),
+                token = "",
+                imageLoader = gifImageLoader,
+                isClickable = false
+            )
         }
     }
 }
