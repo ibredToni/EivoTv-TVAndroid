@@ -47,12 +47,14 @@ import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
+import androidx.tv.material3.MaterialTheme
 import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
+import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.FilterButton
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -100,8 +102,7 @@ fun MatchesScreen(
 
     val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        BackgroundFoci(Color(0xFF269091))
+    EivoScreenContainer {
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
 

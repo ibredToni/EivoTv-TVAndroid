@@ -78,7 +78,7 @@ fun LoginLinkingScreen(
             )
         )
 
-        BackgroundFoci(eivoColor)
+        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Column(
             modifier = Modifier.fillMaxSize(),

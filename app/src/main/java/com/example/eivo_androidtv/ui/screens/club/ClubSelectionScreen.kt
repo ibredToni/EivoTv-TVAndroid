@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,7 +63,7 @@ fun ClubSelectionScreen(
     val currentSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        BackgroundFoci(Color(0xFF269091))
+        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
             Row(
@@ -188,7 +189,7 @@ private fun ClubSelectionItem(
                             urlToLoad = fallbackUrl
                         }
                     },
-                    placeholder = painterResource(id = R.drawable.ic_eivo_logo),
+                    placeholder = ColorPainter(Color.Black),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )

@@ -28,6 +28,7 @@ import com.example.eivo_androidtv.data.remote.dto.ProfileResponseDto
 import com.example.eivo_androidtv.data.remote.dto.SuscripcionDto
 import com.example.eivo_androidtv.data.remote.dto.UserDataDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
+import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -59,8 +60,7 @@ fun ProfileScreen(
             onDismiss = { showUnlinkDialog = false }
         )
     } else {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            BackgroundFoci(Color(0xFF269091))
+        EivoScreenContainer {
 
             Column(
                 modifier = Modifier
@@ -158,7 +158,7 @@ fun UnlinkConfirmationScreen(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 )
         )
 
-        BackgroundFoci(Color(0xFF269091))
+        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Column(
             modifier = Modifier.fillMaxSize(),

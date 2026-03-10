@@ -82,7 +82,7 @@ fun PauseScreen(
             }
         }
 
-        BackgroundFoci(Color(0xFF269091))
+        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Box(
             modifier = Modifier
