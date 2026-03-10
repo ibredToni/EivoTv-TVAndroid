@@ -62,9 +62,11 @@ fun PauseScreen(
                 AsyncImage(
                     model = pauseAd?.url,
                     contentDescription = "Publicidad",
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
                     contentScale = ContentScale.FillBounds,
-                    error = painterResource(id = R.drawable.ic_eivo_logo)
+                    error = null
                 )
 
                 Box(

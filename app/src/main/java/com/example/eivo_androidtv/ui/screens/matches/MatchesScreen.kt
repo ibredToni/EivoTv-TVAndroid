@@ -74,8 +74,9 @@ fun MatchesScreen(
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var matches by remember { mutableStateOf<List<EventoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var currentSportId by remember(initialSport) { mutableStateOf(initialSport) }
 
-    LaunchedEffect(selectedRegion, initialSport, onlyDirectos, filterClubId, selectedDate) {
+    LaunchedEffect(selectedRegion, initialSport, onlyDirectos, filterClubId, selectedDate, currentSportId) {
         if (selectedRegion == null) return@LaunchedEffect
 
         isLoading = true
@@ -97,7 +98,7 @@ fun MatchesScreen(
         }
     }
 
-    val currentSportName = sports.find { it.id.toString() == initialSport }?.nombre ?: ""
+    val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(Color(0xFF269091))
@@ -115,8 +116,10 @@ fun MatchesScreen(
                     items = sports.map { it.nombre },
                     selectedItem = currentSportName,
                     onItemSelected = { nombre ->
-                        sports.find { it.nombre == nombre }?.let {
-                            onSportSelected(it.id.toString())
+                        sports.find { it.nombre == nombre }?.let { deporte ->
+                            val newId = deporte.id.toString()
+                            currentSportId = newId
+                            onSportSelected(newId)
                             onlyDirectos = false
                         }
                     },

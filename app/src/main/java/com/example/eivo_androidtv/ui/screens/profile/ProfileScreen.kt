@@ -296,8 +296,10 @@ fun SubscriptionCard(
                 AsyncImage(
                     model = suscripcion?.escudo,
                     contentDescription = null,
-                    modifier = Modifier.size(60.dp),
-                    error = painterResource(R.drawable.ic_eivo_logo), // Logo por defecto si falla
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color.Black),
+                    error = null,
                     contentScale = ContentScale.Fit
                 )
             }

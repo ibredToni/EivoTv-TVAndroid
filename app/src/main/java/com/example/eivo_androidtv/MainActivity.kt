@@ -195,7 +195,7 @@ fun AppNavigation() {
                 .collectAsStateWithLifecycle()
 
             MatchesScreen(
-                initialSport = sportIdFromRoute,
+                initialSport = if (globalSportId.isNotEmpty()) globalSportId else sportIdFromRoute,
                 selectedRegion = globalRegion,
                 onRegionSelected = { globalRegion = it },
                 filterClubId = selectedClubId,

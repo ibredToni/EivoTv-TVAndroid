@@ -45,6 +45,11 @@ import com.example.eivo_androidtv.ui.components.ProfileIcon
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import android.os.Build
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -247,9 +252,11 @@ fun HeroBanner(
                             .allowHardware(false)
                             .build(),
                         contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
                         contentScale = ContentScale.Crop,
-                        error = painterResource(R.drawable.ic_eivo_logo),
+                        error = null,
                         onError = { state ->
                             android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
                         }
@@ -400,10 +407,12 @@ fun RightSidebar(
 
     LaunchedEffect(adHome, adHome2) {
         while (true) {
-            kotlinx.coroutines.delay(5000) // Cambia cada 5 segundos
+            kotlinx.coroutines.delay(5000)
             if (adHome.isNotEmpty()) {
                 currentAd1Index = (currentAd1Index + 1) % adHome.size
             }
+
+            kotlinx.coroutines.delay(5000)
             if (adHome2.isNotEmpty()) {
                 currentAd2Index = (currentAd2Index + 1) % adHome2.size
             }
@@ -422,22 +431,42 @@ fun RightSidebar(
                 onClick = { onNextClick(nextDestacado.id.toString()) }
             )
         }
-        val ad1ToShow = adHome.getOrNull(currentAd1Index)
-        SidebarItem(
-            imageUrl = ad1ToShow?.url,
-            modifier = Modifier.weight(1f),
-            token = "",
-            imageLoader = gifImageLoader,
-            isClickable = false
-        )
-        val ad2ToShow = adHome2.getOrNull(currentAd2Index)
-        SidebarItem(
-            imageUrl = ad2ToShow?.url,
-            modifier = Modifier.weight(1f),
-            token = "",
-            imageLoader = gifImageLoader,
-            isClickable = false
-        )
+
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = adHome.getOrNull(currentAd1Index),
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(1000)) togetherWith fadeOut(animationSpec = tween(1000))
+                },
+                label = "Ad1Transition"
+            ) { ad ->
+                SidebarItem(
+                    imageUrl = ad?.url,
+                    modifier = Modifier.fillMaxSize(),
+                    token = "",
+                    imageLoader = gifImageLoader,
+                    isClickable = false
+                )
+            }
+        }
+
+        Box(modifier = Modifier.weight(1f)) {
+            AnimatedContent(
+                targetState = adHome2.getOrNull(currentAd2Index),
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(1000)) togetherWith fadeOut(animationSpec = tween(1000))
+                },
+                label = "Ad2Transition"
+            ) { ad ->
+                SidebarItem(
+                    imageUrl = ad?.url,
+                    modifier = Modifier.fillMaxSize(),
+                    token = "",
+                    imageLoader = gifImageLoader,
+                    isClickable = false
+                )
+            }
+        }
     }
 }
 
@@ -490,8 +519,10 @@ fun SidebarImageContent(imageUrl: String?, imageRes: Int?, token: String, imageL
             .build(),
         imageLoader = imageLoader,
         contentDescription = null,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
         contentScale = ContentScale.Crop,
-        error = painterResource(R.drawable.ic_eivo_logo)
+        error = null
     )
 }
