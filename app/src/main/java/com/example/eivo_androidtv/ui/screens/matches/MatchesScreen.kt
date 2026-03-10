@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.tv.material3.ExperimentalTvMaterial3Api
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,13 +46,10 @@ import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
-import androidx.tv.material3.MaterialTheme
-import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
-import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.FilterButton
 
@@ -93,7 +89,7 @@ fun MatchesScreen(
             }
             matches = result
         } catch (e: Exception) {
-            android.util.Log.e("MATCHES_ERROR", "Fallo al cargar partidos: ${e.message}")
+            //android.util.Log.e("MATCHES_ERROR", "Fallo al cargar partidos: ${e.message}")
             matches = emptyList()
         } finally {
             isLoading = false

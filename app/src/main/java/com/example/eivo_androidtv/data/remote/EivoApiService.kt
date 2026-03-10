@@ -54,30 +54,28 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
         val listener = object : EventSourceListener() {
             override fun onOpen(eventSource: EventSource, response: Response) {
-                android.util.Log.e("MERCURE_TEST", "CONEXIÓN ABIERTA")
+                //android.util.Log.e("MERCURE_TEST", "CONEXIÓN ABIERTA")
             }
 
             override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-                android.util.Log.e("MERCURE_TEST", "¡EVENTO RECIBIDO!")
-                android.util.Log.e("MERCURE_TEST", "Tipo: $type")
-                android.util.Log.e("MERCURE_TEST", "Data: $data")
+                //android.util.Log.e("MERCURE_TEST", "Tipo: $type")
+                //android.util.Log.e("MERCURE_TEST", "Data: $data")
 
                 try {
                     val payload = json.decodeFromString<AuthPayloadDto>(data)
                     trySend(payload)
                 } catch (e: Exception) {
-                    android.util.Log.e("MERCURE_TEST", "Error al parsear JSON: ${e.message}")
+                    //android.util.Log.e("MERCURE_TEST", "Error al parsear JSON: ${e.message}")
                 }
             }
 
             override fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
-                android.util.Log.e("MERCURE_TEST", "FALLO EN SSE")
-                android.util.Log.e("MERCURE_TEST", "Mensaje: ${t?.message}")
-                android.util.Log.e("MERCURE_TEST", "Código HTTP: ${response?.code}")
+                //android.util.Log.e("MERCURE_TEST", "Mensaje: ${t?.message}")
+                //android.util.Log.e("MERCURE_TEST", "Código HTTP: ${response?.code}")
             }
 
             override fun onClosed(eventSource: EventSource) {
-                android.util.Log.e("MERCURE_TEST", "CONEXIÓN CERRADA POR EL SERVIDOR")
+                //android.util.Log.e("MERCURE_TEST", "CONEXIÓN CERRADA POR EL SERVIDOR")
             }
         }
 

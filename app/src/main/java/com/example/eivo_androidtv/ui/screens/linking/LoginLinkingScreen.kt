@@ -25,8 +25,6 @@ import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.QrImage
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.requestFocus
-import androidx.compose.foundation.focusable
 import com.example.eivo_androidtv.ui.components.FilterButton
 
 @OptIn(ExperimentalTvMaterial3Api::class)

@@ -24,11 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.tv.material3.*
 import com.example.eivo_androidtv.R
-import com.example.eivo_androidtv.data.network.MockApiService.getClubes
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ClubDto
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
-import com.example.eivo_androidtv.domain.model.ClubData
 import com.example.eivo_androidtv.ui.components.ProfileIcon
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import androidx.compose.ui.platform.LocalContext

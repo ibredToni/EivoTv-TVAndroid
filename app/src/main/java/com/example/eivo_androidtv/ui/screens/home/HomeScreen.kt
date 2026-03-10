@@ -29,17 +29,12 @@ import androidx.tv.material3.*
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eivo_androidtv.R
-import com.example.eivo_androidtv.Screen
 import com.example.eivo_androidtv.data.local.SessionManager
-import com.example.eivo_androidtv.data.network.MockApiService
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.DestacadoDto
-import com.example.eivo_androidtv.domain.model.BannerData
-import com.example.eivo_androidtv.domain.model.AdData
-import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.ChipGroup
 import com.example.eivo_androidtv.ui.components.ProfileIcon
 import coil.decode.GifDecoder
@@ -83,9 +78,8 @@ fun HomeScreen(
 
             val posicionesValidas = listOf("home_1", "home_2")
             adsHome = adsDeferred.filter { it.position in posicionesValidas }
-            android.util.Log.d("ADS_DEBUG", "Anuncios encontrados: ${adsHome.size}")
         } catch (e: Exception) {
-            android.util.Log.e("HOME_ERROR", "Error al cargar destacados: ${e.message}")
+            //android.util.Log.e("HOME_ERROR", "Error al cargar destacados: ${e.message}")
         } finally {
             isLoading = false
         }
@@ -103,7 +97,6 @@ fun HomeScreen(
                 if (regions.isNotEmpty()) {
                     kotlinx.coroutines.yield()
                     topBarFocusRequester.requestFocus()
-                    android.util.Log.d("FOCUS_DEBUG", "Foco solicitado a TopBar")
                 }
             }
 
@@ -242,7 +235,7 @@ fun HeroBanner(
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     LaunchedEffect(data.img) {
-                        android.util.Log.d("URL_CHECK", "Intentando cargar: ${data.img.trim()}")
+                        //android.util.Log.d("URL_CHECK", "Intentando cargar: ${data.img.trim()}")
                     }
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
@@ -258,7 +251,7 @@ fun HeroBanner(
                         contentScale = ContentScale.Crop,
                         error = null,
                         onError = { state ->
-                            android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
+                            //android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
                         }
                     )
 

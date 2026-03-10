@@ -45,7 +45,7 @@ fun ProfileScreen(
         try {
             profileData = apiService.fetchUserProfile()
         } catch (e: Exception) {
-            android.util.Log.e("PROFILE_ERROR", "Error: ${e.message}")
+            //android.util.Log.e("PROFILE_ERROR", "Error: ${e.message}")
         } finally {
             isLoading = false
         }
@@ -186,7 +186,6 @@ fun UnlinkConfirmationScreen(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                 DialogButton(text = "Sí", onClick = onConfirm)
 
-                // Botón NO con el foco forzado
                 DialogButton(
                     text = "No",
                     onClick = onDismiss,

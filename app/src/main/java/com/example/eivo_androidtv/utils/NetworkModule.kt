@@ -7,12 +7,10 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import okhttp3.logging.HttpLoggingInterceptor
 
-// Cambiamos a 'object' para que 'this' tenga sentido y sea un Singleton real
 object NetworkModule {
     private var singletonClient: OkHttpClient? = null
 
     fun createOkHttpClient(sessionManager: SessionManager): OkHttpClient {
-        // Usamos el lock del objeto NetworkModule
         return singletonClient ?: synchronized(this) {
             singletonClient ?: OkHttpClient.Builder()
                 .connectTimeout(0, TimeUnit.MILLISECONDS)
@@ -23,7 +21,7 @@ object NetworkModule {
                     val originalRequest = chain.request()
                     val token = sessionManager.fetchAuthToken()
 
-                    android.util.Log.d("DEBUG_NET", "Petición a: ${originalRequest.url}")
+                    //android.util.Log.d("DEBUG_NET", "Petición a: ${originalRequest.url}")
 
                     val isAuthPath = originalRequest.url.encodedPath.contains("register-topic") ||
                             originalRequest.url.encodedPath.contains(Constants.ENDPOINT_MERCURE)
@@ -49,7 +47,7 @@ class PersistentCookieJar(private val sessionManager: SessionManager) : CookieJa
     override fun saveFromResponse(url: HttpUrl, cookies: List<okhttp3.Cookie>) {
         val cookieString = cookies.joinToString("; ") { "${it.name}=${it.value}" }
         if (cookieString.isNotEmpty()) {
-            android.util.Log.d("COOKIE_DEBUG", "Guardando cookies de ${url.host}: $cookieString")
+            //android.util.Log.d("COOKIE_DEBUG", "Guardando cookies de ${url.host}: $cookieString")
             sessionManager.saveCookie(cookieString)
         }
     }

@@ -1,8 +1,6 @@
 package com.example.eivo_androidtv.ui.screens.player
 
-import android.media.browse.MediaBrowser
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
@@ -24,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.media3.common.MimeTypes.APPLICATION_M3U8
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
@@ -53,7 +50,7 @@ fun PlayerScreen(
 
             ads = adsDeferred.filter { it.position == "pause" }
         } catch (e: Exception) {
-            android.util.Log.e("HOME_ERROR", "Error al cargar datos: ${e.message}")
+            //android.util.Log.e("HOME_ERROR", "Error al cargar datos: ${e.message}")
         }
     }
 
@@ -65,14 +62,12 @@ fun PlayerScreen(
         }
         is PlayerUiState.Success -> {
             Box(modifier = Modifier.fillMaxSize()) {
-                // 1. El Reproductor siempre debajo
                 VideoPlayer(
                     url = state.detalle.url_hd ?: state.detalle.url_sd ?: "",
                     isPaused = isPaused,
                     onManualPauseToggle = { isPaused = it }
                 )
 
-                // 2. Capa de Pausa (Solo se ve si isPaused es true)
                 if (isPaused) {
                     PauseScreen(
                         detalle = state.detalle,
@@ -126,7 +121,6 @@ fun VideoPlayer(
             prepare()
             playWhenReady = true
                 addListener(object : Player.Listener {
-                    // Si el usuario pausa desde el controlador nativo (botón play/pause de la UI)
                     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                         if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST ||
                             reason == Player.PLAY_WHEN_READY_CHANGE_REASON_REMOTE) {

@@ -14,7 +14,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -111,21 +111,20 @@ fun PauseScreen(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        android.util.Log.d("PAUSE_DEBUG", "Loc: ${detalle.img_loc} | Vis: ${detalle.img_vis}")
                         AsyncImage(
                             model = coil.request.ImageRequest.Builder(LocalContext.current)
                                 .data(detalle.img_loc)
                                 .crossfade(true)
                                 .listener(
                                     onError = { _, result ->
-                                        android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
+                                        //android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
                                     }
                                 )
                                 .build(),
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
                             contentScale = ContentScale.Fit,
-                            error = painterResource(id = R.drawable.escudo_1)
+                            error = ColorPainter(Color.Black)
                         )
                         Spacer(Modifier.width(8.dp))
                         AsyncImage(
@@ -134,14 +133,14 @@ fun PauseScreen(
                                 .crossfade(true)
                                 .listener(
                                     onError = { _, result ->
-                                        android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
+                                        //android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
                                     }
                                 )
                                 .build(),
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
                             contentScale = ContentScale.Fit,
-                            error = painterResource(id = R.drawable.escudo_2)
+                            error = ColorPainter(Color.Black)
                         )
                     }
 

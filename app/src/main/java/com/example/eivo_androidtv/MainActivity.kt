@@ -33,26 +33,12 @@ import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.repository.AuthRepositoryImpl
 import com.example.eivo_androidtv.domain.usecase.GetQrCodeUseCase
 import com.example.eivo_androidtv.domain.usecase.ListenLoginUseCase
+import com.example.eivo_androidtv.ui.navigation.Screen
 import com.example.eivo_androidtv.ui.screens.linking.LinkingViewModel
 import com.example.eivo_androidtv.ui.screens.matches.MatchesScreen
 import com.example.eivo_androidtv.ui.screens.player.PlayerScreen
 import com.example.eivo_androidtv.utils.Constants
 import com.example.eivo_androidtv.utils.NetworkModule
-
-sealed class Screen(val route: String) {
-    object Linking : Screen("linking")
-    object Home : Screen("home")
-    object Matches : Screen("matches/{sport}") {
-        fun createRoute(sport: String) = "matches/$sport"
-    }
-    object ClubSelection : Screen("club_selection")
-    object Profile : Screen("profile")
-    object Pause : Screen("pause")
-
-    object Player : Screen("player/{eventId}") {
-        fun createRoute(eventId: String) = "player/$eventId"
-    }
-}
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTvMaterial3Api::class)
@@ -89,7 +75,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val sessionManager = remember { com.example.eivo_androidtv.data.local.SessionManager(context) }
+    val sessionManager = remember { SessionManager(context) }
     val apiService = remember {
         EivoApiService(
             client = NetworkModule.createOkHttpClient(sessionManager),
@@ -111,14 +97,13 @@ fun AppNavigation() {
         val currentToken = sessionManager.fetchAuthToken()
         if (!currentToken.isNullOrEmpty() && globalRegions.isEmpty()) {
             try {
-                android.util.Log.d("NAV_DEBUG", "Cargando comunidades...")
                 val fetchedRegions = apiService.fetchComunidades()
                 globalRegions = fetchedRegions
                 if (globalRegion == null && fetchedRegions.isNotEmpty()) {
                     globalRegion = fetchedRegions.first()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("NAV_ERROR", "Error: ${e.message}")
+                //android.util.Log.e("NAV_ERROR", "Error: ${e.message}")
                 if (e.message?.contains("401") == true) {
                     sessionManager.clearSession()
                     navController.navigate(Screen.Linking.route) { popUpTo(0) }
@@ -136,7 +121,7 @@ fun AppNavigation() {
                     globalSportId = fetched.first().id.toString()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("NAV_ERROR", "Error cargando deportes: ${e.message}")
+                //android.util.Log.e("NAV_ERROR", "Error cargando deportes: ${e.message}")
             }
         }
     }

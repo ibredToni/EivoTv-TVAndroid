@@ -25,10 +25,10 @@ class LinkingViewModel(
                 uiState = uiState.copy(uuid = qrData.uuid, isLoading = false)
 
                 launch {
-                    android.util.Log.e("MERCURE_TEST", "Iniciando escucha de: ${qrData.topic}")
+                    //android.util.Log.e("MERCURE_TEST", "Iniciando escucha de: ${qrData.topic}")
                     listenLoginUseCase(qrData.topic)
                         .collect { authResult ->
-                            android.util.Log.e("MERCURE_TEST", "¡Token recibido en VM!")
+                            //android.util.Log.e("MERCURE_TEST", "¡Token recibido en VM!")
                             uiState = uiState.copy(isLoggedIn = true, token = authResult.token)
                             sessionManager.saveAuthToken(authResult.token)
                         }
