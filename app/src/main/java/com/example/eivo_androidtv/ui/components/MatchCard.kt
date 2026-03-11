@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.utils.formatToTime
 
@@ -62,7 +63,12 @@ fun MatchCard(
                     .aspectRatio(if (isFocused) 1.1f else 1.6f)
             ) {
                 AsyncImage(
-                    model = match.img_back ?: R.drawable.portero,
+                    model = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                        .data(match.img_back)
+                        .fallback(R.drawable.back_error)
+                        .error(R.drawable.back_error)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
