@@ -124,7 +124,7 @@ fun PauseScreen(
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
                             contentScale = ContentScale.Fit,
-                            error = ColorPainter(Color.Black)
+                            error = null
                         )
                         Spacer(Modifier.width(8.dp))
                         AsyncImage(
@@ -140,7 +140,7 @@ fun PauseScreen(
                             contentDescription = null,
                             modifier = Modifier.size(40.dp),
                             contentScale = ContentScale.Fit,
-                            error = ColorPainter(Color.Black)
+                            error = null
                         )
                     }
 

@@ -296,8 +296,7 @@ fun SubscriptionCard(
                     model = suscripcion?.escudo,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(60.dp)
-                        .background(Color.Black),
+                        .size(60.dp),
                     error = null,
                     contentScale = ContentScale.Fit
                 )
