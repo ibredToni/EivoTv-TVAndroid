@@ -27,6 +27,7 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.example.eivo_androidtv.data.remote.dto.AdDto
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.utils.NetworkModule
 
 @Composable
@@ -57,7 +58,7 @@ fun PlayerScreen(
     when (val state = viewModel.uiState) {
         is PlayerUiState.Loading -> {
             Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color.Cyan)
+                CircularProgressIndicator(color = Color.White)
             }
         }
         is PlayerUiState.Success -> {
@@ -78,8 +79,13 @@ fun PlayerScreen(
             }
         }
         is PlayerUiState.Error -> {
-            Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-                Text(state.message, color = Color.White)
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                ErrorStateComponent(
+                    isOffline = state.message.contains("UnknownHostException", ignoreCase = true),
+                    onRetry = {
+                        viewModel.retryLoadDetails()
+                    }
+                )
             }
         }
     }

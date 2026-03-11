@@ -40,6 +40,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.onFocusChanged
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -51,7 +52,10 @@ import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.FilterButton
+import com.example.eivo_androidtv.ui.components.NoContentState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -73,27 +77,36 @@ fun MatchesScreen(
     var matches by remember { mutableStateOf<List<EventoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var currentSportId by remember(initialSport) { mutableStateOf(initialSport) }
+    var errorOccurred by remember { mutableStateOf(false) }
+    var isOffline by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(selectedRegion, initialSport, onlyDirectos, filterClubId, selectedDate, currentSportId) {
-        if (selectedRegion == null) return@LaunchedEffect
+    val loadMatches = suspend {
+        if (selectedRegion != null) {
+            isLoading = true
+            errorOccurred = false
+            isOffline = false
 
-        isLoading = true
-        try {
-            val communityId = selectedRegion.id.toString()
-
-            val result = if (onlyDirectos) {
-                apiService.fetchDirectos(communityId, initialSport, filterClubId)
-            } else {
-                val formattedDate = selectedDate.toString()
-                apiService.fetchEventos(communityId, initialSport, formattedDate, filterClubId)
+            try {
+                val communityId = selectedRegion.id.toString()
+                matches = if (onlyDirectos) {
+                    apiService.fetchDirectos(communityId, currentSportId, filterClubId)
+                } else {
+                    apiService.fetchEventos(communityId, currentSportId, selectedDate.toString(), filterClubId)
+                }
+            } catch (e: java.net.UnknownHostException) {
+                isOffline = true
+                errorOccurred = true
+            } catch (e: Exception) {
+                errorOccurred = true
+            } finally {
+                isLoading = false
             }
-            matches = result
-        } catch (e: Exception) {
-            //android.util.Log.e("MATCHES_ERROR", "Fallo al cargar partidos: ${e.message}")
-            matches = emptyList()
-        } finally {
-            isLoading = false
         }
+    }
+
+    LaunchedEffect(selectedRegion, onlyDirectos, filterClubId, selectedDate, currentSportId) {
+        loadMatches()
     }
 
     val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
@@ -138,44 +151,42 @@ fun MatchesScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (isLoading) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    androidx.compose.material.CircularProgressIndicator(color = Color.White)
-                }
-            } else if (matches.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val emptyMessage = when {
-                        onlyDirectos -> "No hay partidos en directo en ${selectedRegion?.name} para $currentSportName"
-                        filterClubId != null -> "Este club no tiene partidos programados"
-                        else -> "No hay partidos disponibles"
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when {
+                    isLoading -> {
+                        Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            androidx.compose.material.CircularProgressIndicator(color = Color.White)
+                        }
                     }
-
-                    Text(
-                        text = emptyMessage.uppercase(),
-                        color = Color.White.copy(alpha = 0.5f),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(5),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(32.dp),
-                    contentPadding = PaddingValues(bottom = 48.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(matches) { match ->
-                        MatchCard(
-                            match = match,
-                            onClick = {
-                                onNavigateToPlayer(match.id.toString())
-                            }
+                    errorOccurred -> {
+                        ErrorStateComponent(
+                            isOffline = isOffline,
+                            onRetry = { scope.launch { loadMatches() } }
                         )
+                    }
+                    matches.isEmpty() -> {
+                        val emptyMessage = when {
+                            onlyDirectos -> "No hay partidos en directo en ${selectedRegion?.name} para $currentSportName"
+                            filterClubId != null -> "Este club no tiene partidos programados"
+                            else -> "No hay partidos disponibles"
+                        }
+                        NoContentState(message = emptyMessage)
+                    }
+                    else -> {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(5),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(32.dp),
+                            contentPadding = PaddingValues(bottom = 48.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(matches) { match ->
+                                MatchCard(
+                                    match = match,
+                                    onClick = { onNavigateToPlayer(match.id.toString()) }
+                                )
+                            }
+                        }
                     }
                 }
             }

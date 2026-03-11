@@ -34,6 +34,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.ui.components.ChipGroup
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
+import com.example.eivo_androidtv.ui.components.NoContentState
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -49,13 +52,31 @@ fun ClubSelectionScreen(
     onNavigateToProfile: () -> Unit
 ) {
     var clubs by remember { mutableStateOf<List<ClubDto>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorOccurred by remember { mutableStateOf(false) }
+    var isOffline by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(selectedRegion, selectedSportId) {
+    val loadClubs = suspend {
         if (selectedRegion != null && selectedSportId.isNotEmpty()) {
+            isLoading = true
+            errorOccurred = false
+            isOffline = false
             try {
                 clubs = apiService.fetchClubs(selectedRegion.id.toString(), selectedSportId)
-            } catch (e: Exception) { clubs = emptyList() }
+            } catch (e: java.net.UnknownHostException) {
+                isOffline = true
+                errorOccurred = true
+            } catch (e: Exception) {
+                errorOccurred = true
+            } finally {
+                isLoading = false
+            }
         }
+    }
+
+    LaunchedEffect(selectedRegion, selectedSportId) {
+        loadClubs()
     }
 
     val currentSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
@@ -63,76 +84,100 @@ fun ClubSelectionScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(MaterialTheme.colorScheme.primary)
 
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Image(painterResource(id = R.drawable.ic_eivo_logo), null, Modifier.width(80.dp))
-                ChipGroup(
-                    items = sports.map { it.nombre },
-                    selectedItem = currentSportName,
-                    onItemSelected = { nombre ->
-                        sports.find { it.nombre == nombre }?.let { onSportSelected(it.id.toString()) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                ProfileIcon(onNavigateToProfile = onNavigateToProfile)
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                var isBackFocused by remember { mutableStateOf(false) }
-
-                Box(
-                    modifier = Modifier
-                        .onFocusChanged { isBackFocused = it.isFocused }
-                        .border(
-                            width = 2.dp,
-                            color = if (isBackFocused) Color.White else Color.Transparent,
-                            shape = RectangleShape
-                        )
-                        .padding(4.dp)
-                ) {
-                    Surface(
-                        onClick = onBackWithoutSelection,
-                        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
-                        shape = ClickableSurfaceDefaults.shape(RectangleShape),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color(0xFFC0C0C0),
-                            focusedContainerColor = Color(0xFFC0C0C0)
-                        )
-                    ) {
-                        Text(
-                            text = "Volver sin escoger club",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-                        )
-                    }
+        // Lógica de Estados
+        when {
+            isLoading -> {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    androidx.compose.material.CircularProgressIndicator(color = Color.White)
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            errorOccurred -> {
+                ErrorStateComponent(
+                    isOffline = isOffline,
+                    onRetry = {
+                        scope.launch { loadClubs() }
+                    }
+                )
+            }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(7),
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
-                verticalArrangement = Arrangement.spacedBy(40.dp),
-                contentPadding = PaddingValues(top = 20.dp, bottom = 48.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(clubs) { club ->
-                    ClubSelectionItem(
-                        name = club.name,
-                        imageUrl = club.image,
-                        fallbackUrl = club.fail,
-                        onClick = { onClubSelected(club.id.toString()) }
-                    )
+            clubs.isEmpty() -> {
+                NoContentState(message = "No hay clubes disponibles para este deporte en ${selectedRegion?.name}")
+            }
+
+            else -> {
+                Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Image(painterResource(id = R.drawable.ic_eivo_logo), null, Modifier.width(80.dp))
+                        ChipGroup(
+                            items = sports.map { it.nombre },
+                            selectedItem = currentSportName,
+                            onItemSelected = { nombre ->
+                                sports.find { it.nombre == nombre }?.let { onSportSelected(it.id.toString()) }
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ProfileIcon(onNavigateToProfile = onNavigateToProfile)
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        var isBackFocused by remember { mutableStateOf(false) }
+                        Box(
+                            modifier = Modifier
+                                .onFocusChanged { isBackFocused = it.isFocused }
+                                .border(
+                                    width = 2.dp,
+                                    color = if (isBackFocused) Color.White else Color.Transparent,
+                                    shape = RectangleShape
+                                )
+                                .padding(4.dp)
+                        ) {
+                            Surface(
+                                onClick = onBackWithoutSelection,
+                                scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+                                shape = ClickableSurfaceDefaults.shape(RectangleShape),
+                                colors = ClickableSurfaceDefaults.colors(
+                                    containerColor = Color(0xFFC0C0C0),
+                                    focusedContainerColor = Color(0xFFC0C0C0)
+                                )
+                            ) {
+                                Text(
+                                    text = "Volver sin escoger club",
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(7),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(40.dp),
+                        contentPadding = PaddingValues(top = 20.dp, bottom = 48.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(clubs) { club ->
+                            ClubSelectionItem(
+                                name = club.name,
+                                imageUrl = club.image,
+                                fallbackUrl = club.fail,
+                                onClick = { onClubSelected(club.id.toString()) }
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)

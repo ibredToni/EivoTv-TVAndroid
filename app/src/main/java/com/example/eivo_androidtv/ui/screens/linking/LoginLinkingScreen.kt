@@ -25,6 +25,7 @@ import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.QrImage
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.FilterButton
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -49,10 +50,6 @@ fun LoginLinkingScreen(
         if (state.isLoggedIn) {
             onNavigateToHome()
         }
-    }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -90,48 +87,73 @@ fun LoginLinkingScreen(
                 contentScale = ContentScale.FillWidth
             )
 
-            val textStyle = androidx.compose.ui.text.TextStyle(
-                color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
-            )
+            when {
 
-            Text(text = "Para vincular tu cuenta en esta TV\nescanea el código QR desde tu App de eivo", style = textStyle)
+                state.error != null && !state.isLoading -> {
+                    ErrorStateComponent(
+                        isOffline = state.error.contains("UnknownHostException", ignoreCase = true),
+                        onRetry = { viewModel.loadQrAndListen() }
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(24.dp))
 
-            Box(
-                modifier = Modifier.size(160.dp).background(Color.White, shape = RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (state.uuid != null) {
-                    QrImage(text = state.uuid ?: "", modifier = Modifier.fillMaxSize())
-                } else {
-                    androidx.compose.material.CircularProgressIndicator(color = eivoColor)
+                state.isLoading && state.uuid == null -> {
+                    Box(modifier = Modifier.size(160.dp), contentAlignment = Alignment.Center) {
+                        androidx.compose.material.CircularProgressIndicator(color = eivoColor)
+                    }
+                }
+
+                state.uuid != null -> {
+                    val textStyle = androidx.compose.ui.text.TextStyle(
+                        color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                    )
+
+                    Text(text = "Para vincular tu cuenta en esta TV\nescanea el código QR desde tu App de eivo", style = textStyle)
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Box(
+                        modifier = Modifier.size(160.dp).background(Color.White, shape = RoundedCornerShape(4.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        QrImage(text = state.uuid, modifier = Modifier.fillMaxSize())
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(text = "o introduce el código manualmente en tu App", style = textStyle)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .width(240.dp)
+                            .border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
+                            .background(Color.Black.copy(alpha = 0.4f))
+                            .padding(all = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.uuid,
+                            color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    Box(modifier = Modifier.focusRequester(focusRequester)) {
+                        FilterButton(
+                            text = if (state.isLoading) "Generando..." else "Generar nuevo código",
+                            isActive = false,
+                            onClick = { viewModel.loadQrAndListen() }
+                        )
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(text = "o introduce el código manualmente en tu App", style = textStyle)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier.width(240.dp).border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
-                    .background(Color.Black.copy(alpha = 0.4f)).padding(all = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = state.uuid ?: "Cargando...",
-                    color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            FilterButton(
-                text = "Generar nuevo código",
-                isActive = false,
-                onClick = { viewModel.loadQrAndListen() },
-                modifier = Modifier.focusRequester(focusRequester)
-            )
         }
     }
-}
+
+    LaunchedEffect(state.uuid, state.error) {
+        if (state.uuid != null || state.error != null) {
+            focusRequester.requestFocus()
+        }
+    }
+        }
+

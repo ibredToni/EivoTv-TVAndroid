@@ -35,6 +35,10 @@ class PlayerViewModel(
             }
         }
     }
+
+    fun retryLoadDetails() {
+        loadEventDetails()
+    }
 }
 
 sealed class PlayerUiState {

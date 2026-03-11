@@ -46,6 +46,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
+import com.example.eivo_androidtv.ui.components.NoContentState
+import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -70,99 +73,137 @@ fun HomeScreen(
     val sportsChipFocusRequester = remember { FocusRequester() }
     val selectedSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
     val token = remember { sessionManager.fetchAuthToken() ?: "" }
+    var errorOccurred by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    var isOffline by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    val loadData = suspend {
+        isLoading = true
+        errorOccurred = false
+        isOffline = false
         try {
             destacados = apiService.fetchDestacados()
             val adsDeferred = apiService.fetchAdverts()
-
             val posicionesValidas = listOf("home_1", "home_2")
             adsHome = adsDeferred.filter { it.position in posicionesValidas }
+        } catch (e: java.net.UnknownHostException) {
+            isOffline = true
+            errorOccurred = true
         } catch (e: Exception) {
-            //android.util.Log.e("HOME_ERROR", "Error al cargar destacados: ${e.message}")
+            errorMessage = e.message ?: "Error desconocido"
+            errorOccurred = true
         } finally {
             isLoading = false
         }
     }
 
+    LaunchedEffect(Unit) {
+        loadData()
+    }
+
     EivoScreenContainer {
 
-        if (regions.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        } else {
-
-            LaunchedEffect(regions) {
-                if (regions.isNotEmpty()) {
-                    kotlinx.coroutines.yield()
-                    topBarFocusRequester.requestFocus()
+        when {
+            isLoading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
                 }
             }
 
-            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
-                Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
-                    HomeTopBar(
-                        regions = regions,
-                        selectedRegion = selectedRegion,
-                        onRegionSelected = onRegionSelected,
-                        onNavigateToProfile = onNavigateToProfile,
-                        modifier = Modifier.focusRequester(topBarFocusRequester)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    if (destacados.isNotEmpty()) {
-                        HeroBanner(
-                            banners = destacados,
-                            pagerState = pagerState,
-                            modifier = Modifier.weight(0.72f),
-                            onBannerClick = {
-                                val currentEventId = destacados[pagerState.currentPage].id.toString()
-                                onNavigateToPlayer(currentEventId)
-                            },
-                            onMoveDown = { sportsChipFocusRequester.requestFocus() },
-                            onMoveUp = { topBarFocusRequester.requestFocus() },
-                            token= token
-                        )
-
-                        Spacer(modifier = Modifier.width(20.dp))
-
-                        RightSidebar(
-                            destacados = destacados,
-                            ads = adsHome,
-                            currentPagerIndex = pagerState.currentPage,
-                            modifier = Modifier.weight(0.28f),
-                            token = token,
-                            onNextClick = { eventId ->
-                                onNavigateToPlayer(eventId)
-                            }
-                        )
-                    } else if (!isLoading) {
-                        Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
-                            Text("No hay contenido destacado", color = Color.Gray)
+            errorOccurred -> {
+                ErrorStateComponent(
+                    isOffline = isOffline,
+                    onRetry = {
+                        scope.launch {
+                            loadData()
                         }
+                    }
+                )
+            }
+
+            regions.isEmpty() -> {
+                NoContentState("No hay regiones disponibles")
+            }
+
+            else -> {
+
+                LaunchedEffect(regions) {
+                    if (regions.isNotEmpty()) {
+                        kotlinx.coroutines.yield()
+                        topBarFocusRequester.requestFocus()
                     }
                 }
 
-                Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
-                    ChipGroup(
-                        items = sports.map { it.nombre },
-                        selectedItem = selectedSportName,
-                        onItemSelected = { nombre ->
-                            sports.find { it.nombre == nombre }?.let {
-                                onSportSelected(it.id.toString())
-                                onNavigateToMatches(it.id.toString())
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)
+                ) {
+                    Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
+                        HomeTopBar(
+                            regions = regions,
+                            selectedRegion = selectedRegion,
+                            onRegionSelected = onRegionSelected,
+                            onNavigateToProfile = onNavigateToProfile,
+                            modifier = Modifier.focusRequester(topBarFocusRequester)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        if (destacados.isNotEmpty()) {
+                            HeroBanner(
+                                banners = destacados,
+                                pagerState = pagerState,
+                                modifier = Modifier.weight(0.72f),
+                                onBannerClick = {
+                                    val currentEventId =
+                                        destacados[pagerState.currentPage].id.toString()
+                                    onNavigateToPlayer(currentEventId)
+                                },
+                                onMoveDown = { sportsChipFocusRequester.requestFocus() },
+                                onMoveUp = { topBarFocusRequester.requestFocus() },
+                                token = token
+                            )
+
+                            Spacer(modifier = Modifier.width(20.dp))
+
+                            RightSidebar(
+                                destacados = destacados,
+                                ads = adsHome,
+                                currentPagerIndex = pagerState.currentPage,
+                                modifier = Modifier.weight(0.28f),
+                                token = token,
+                                onNextClick = { eventId ->
+                                    onNavigateToPlayer(eventId)
+                                }
+                            )
+                        } else if (!isLoading) {
+                            Box(
+                                Modifier.fillMaxSize().weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No hay contenido destacado", color = Color.Gray)
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
-                    )
+                        }
+                    }
+
+                    Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
+                        ChipGroup(
+                            items = sports.map { it.nombre },
+                            selectedItem = selectedSportName,
+                            onItemSelected = { nombre ->
+                                sports.find { it.nombre == nombre }?.let {
+                                    onSportSelected(it.id.toString())
+                                    onNavigateToMatches(it.id.toString())
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                        )
+                    }
                 }
             }
         }
-
     }
 }
 

@@ -29,6 +29,8 @@ import com.example.eivo_androidtv.data.remote.dto.SuscripcionDto
 import com.example.eivo_androidtv.data.remote.dto.UserDataDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
+import com.example.eivo_androidtv.ui.components.ErrorStateComponent
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -39,16 +41,29 @@ fun ProfileScreen(
 ) {
     var profileData by remember { mutableStateOf<ProfileResponseDto?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var errorOccurred by remember { mutableStateOf(false) }
+    var isOffline by remember { mutableStateOf(false) }
     var showUnlinkDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    val loadProfile = suspend {
+        isLoading = true
+        errorOccurred = false
+        isOffline = false
         try {
             profileData = apiService.fetchUserProfile()
+        } catch (e: java.net.UnknownHostException) {
+            isOffline = true
+            errorOccurred = true
         } catch (e: Exception) {
-            //android.util.Log.e("PROFILE_ERROR", "Error: ${e.message}")
+            errorOccurred = true
         } finally {
             isLoading = false
         }
+    }
+
+    LaunchedEffect(Unit) {
+        loadProfile()
     }
 
     if (showUnlinkDialog) {
@@ -61,72 +76,92 @@ fun ProfileScreen(
         )
     } else {
         EivoScreenContainer {
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 64.dp, vertical = 32.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_eivo_logo),
-                    contentDescription = null,
-                    modifier = Modifier.width(90.dp)
-                )
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(60.dp)
-                ) {
-                    Column(modifier = Modifier.weight(1.1f)) {
-                        SubscriptionCard(
-                            modifier = Modifier.fillMaxWidth(),
-                            user = profileData?.user,
-                            suscripcion = profileData?.suscripciones?.firstOrNull()
-                        )
-                        Spacer(modifier = Modifier.height(40.dp))
-
-                        Text(
-                            "Desvincular dispositivo de esta cuenta de eivo",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        var isUnlinkFocused by remember { mutableStateOf(false) }
-                        Box(
-                            modifier = Modifier
-                                .onFocusChanged { isUnlinkFocused = it.isFocused }
-                                .border(2.dp, if (isUnlinkFocused) Color.White else Color.Transparent, RectangleShape)
-                                .padding(4.dp)
-                        ) {
-                            Surface(
-                                onClick = { showUnlinkDialog = true },
-                                scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
-                                shape = ClickableSurfaceDefaults.shape(RectangleShape),
-                                colors = ClickableSurfaceDefaults.colors(
-                                    containerColor = Color(0xFF151920),
-                                    focusedContainerColor = Color(0xFF151920)
-                                )
-                            ) {
-                                Text(
-                                    "Desvincular dispositivo",
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                                )
-                            }
-                        }
+            when {
+                isLoading -> {
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        androidx.compose.material.CircularProgressIndicator(color = Color.White)
                     }
-                    StatsSection(
-                        modifier = Modifier.weight(0.9f),
-                        jornadas = profileData?.jornadas ?: 0,
-                        eventos = profileData?.eventos ?: 0
+                }
+
+                errorOccurred -> {
+                    ErrorStateComponent(
+                        isOffline = isOffline,
+                        onRetry = {
+                            scope.launch { loadProfile() }
+                        }
                     )
                 }
+
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 64.dp, vertical = 32.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_eivo_logo),
+                            contentDescription = null,
+                            modifier = Modifier.width(90.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(30.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(60.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1.1f)) {
+                                SubscriptionCard(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    user = profileData?.user,
+                                    suscripcion = profileData?.suscripciones?.firstOrNull()
+                                )
+                                Spacer(modifier = Modifier.height(40.dp))
+
+                                Text(
+                                    "Desvincular dispositivo de esta cuenta de eivo",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                var isUnlinkFocused by remember { mutableStateOf(false) }
+                                Box(
+                                    modifier = Modifier
+                                        .onFocusChanged { isUnlinkFocused = it.isFocused }
+                                        .border(2.dp, if (isUnlinkFocused) Color.White else Color.Transparent, RectangleShape)
+                                        .padding(4.dp)
+                                ) {
+                                    Surface(
+                                        onClick = { showUnlinkDialog = true },
+                                        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+                                        shape = ClickableSurfaceDefaults.shape(RectangleShape),
+                                        colors = ClickableSurfaceDefaults.colors(
+                                            containerColor = Color(0xFF151920),
+                                            focusedContainerColor = Color(0xFF151920)
+                                        )
+                                    ) {
+                                        Text(
+                                            "Desvincular dispositivo",
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            StatsSection(
+                                modifier = Modifier.weight(0.9f),
+                                jornadas = profileData?.jornadas ?: 0,
+                                eventos = profileData?.eventos ?: 0
+                            )
+                        }
+                    }
+
+                }
             }
+
         }
     }
 }
