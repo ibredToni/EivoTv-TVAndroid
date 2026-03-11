@@ -270,32 +270,25 @@ fun HeroBanner(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(32.dp)
+                            .width(IntrinsicSize.Min)
                     ) {
-
-                        val rawName = data.nombre
-                        val displayTitle = if (rawName.length > 23) {
-                            rawName.split("-").joinToString("\n") { it.trim() }
-                        } else {
-                            rawName
-                        }
-
                         Text(
-                            text = displayTitle.uppercase(),
+                            text = data.nombre.uppercase(),
                             color = Color.White,
-                            fontSize = if (displayTitle.contains("\n")) 28.sp else 38.sp,
+                            fontSize = 28.sp,
                             lineHeight = 34.sp,
                             fontWeight = FontWeight.Black,
                             maxLines = 3
                         )
                         Text(
                             text = data.descripcion,
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 18.sp
+                            color = Color.White,//.copy(alpha = 0.8f),
+                            fontSize = 14.sp
                         )
                         Text(
                             text = data.inicio,
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 18.sp
+                            color = Color.White,//.copy(alpha = 0.8f),
+                            fontSize = 14.sp
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -303,6 +296,8 @@ fun HeroBanner(
                         Button(
                             onClick = onBannerClick,
                             modifier = Modifier
+                                .height(26.dp)
+                                .wrapContentWidth()
                                 .onFocusChanged { state -> isPageFocused = state.isFocused }
                                 .onKeyEvent { event ->
                                     if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
@@ -322,6 +317,7 @@ fun HeroBanner(
                                     }
                                 },
                             shape = ButtonDefaults.shape(RectangleShape),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                             colors = ButtonDefaults.colors(
                                 containerColor = Color.White.copy(alpha = 0.2f),
                                 contentColor = Color.White,
@@ -345,14 +341,14 @@ fun HeroBanner(
                             Spacer(Modifier.height(20.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 repeat(banners.size) { index ->
                                     val isSelected = pagerState.currentPage == index
                                     Box(
                                         modifier = Modifier
                                             .height(6.dp)
-                                            .width(if (isSelected) 24.dp else 6.dp)
+                                            .width(if (isSelected) 14.dp else 4.dp)
                                             .background(
                                                 color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
                                                 shape = CircleShape
