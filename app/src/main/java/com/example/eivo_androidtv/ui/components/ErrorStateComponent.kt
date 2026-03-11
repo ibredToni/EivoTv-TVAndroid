@@ -16,6 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,13 +50,13 @@ fun ErrorStateComponent(
         )
         Spacer(Modifier.height(24.dp))
         Text(
-            text = if (isOffline) "SIN CONEXIÓN A INTERNET" else "ALGO HA SALIDO MAL",
+            text = if (isOffline) stringResource(R.string.error_no_internet) else stringResource(R.string.error_something_wrong),
             color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = if (isOffline) "Revisa tu red y vuelve a intentarlo" else "No hemos podido cargar el contenido",
+            text = if (isOffline) stringResource(R.string.error_check_network) else stringResource(R.string.error_content_load_failed),
             color = Color.White.copy(alpha = 0.7f),
             fontSize = 14.sp
         )
@@ -63,7 +64,7 @@ fun ErrorStateComponent(
 
         Box(modifier = Modifier.focusRequester(focusRequester)) {
             FilterButton(
-                text = "REINTENTAR",
+                text = stringResource(R.string.retry),
                 isActive = false,
                 onClick = onRetry
             )

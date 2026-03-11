@@ -8,6 +8,8 @@ import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.example.eivo_androidtv.R
 
 class PlayerViewModel(
     private val apiService: EivoApiService,
@@ -28,10 +30,13 @@ class PlayerViewModel(
                 if (detalle.valido) {
                     uiState = PlayerUiState.Success(detalle)
                 } else {
-                    uiState = PlayerUiState.Error("No tienes suscripción activa para este evento.")
+                    uiState = PlayerUiState.Error(resId = R.string.no_available_subscription)
                 }
             } catch (e: Exception) {
-                uiState = PlayerUiState.Error("Error al cargar el video: ${e.message}")
+                uiState = PlayerUiState.Error(
+                    resId = R.string.error_loading_video,
+                    args = listOf(e.message ?: "Unknown"),
+                    isNetworkError = e is java.net.UnknownHostException)
             }
         }
     }
@@ -44,5 +49,9 @@ class PlayerViewModel(
 sealed class PlayerUiState {
     object Loading : PlayerUiState()
     data class Success(val detalle: EventoDetalleDto) : PlayerUiState()
-    data class Error(val message: String) : PlayerUiState()
+    data class Error(
+        val resId: Int,
+        val args: List<Any> = emptyList(),
+        val isNetworkError: Boolean = false
+    ) : PlayerUiState()
 }

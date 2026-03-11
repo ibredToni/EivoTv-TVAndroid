@@ -25,6 +25,7 @@ import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.QrImage
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.FilterButton
 
@@ -108,7 +109,7 @@ fun LoginLinkingScreen(
                         color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
                     )
 
-                    Text(text = "Para vincular tu cuenta en esta TV\nescanea el código QR desde tu App de eivo", style = textStyle)
+                    Text(text = stringResource(R.string.linking_qr_instruction), style = textStyle)
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Box(
@@ -119,7 +120,7 @@ fun LoginLinkingScreen(
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
-                    Text(text = "o introduce el código manualmente en tu App", style = textStyle)
+                    Text(text = stringResource(R.string.linking_manual_instruction), style = textStyle)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Box(
@@ -140,7 +141,7 @@ fun LoginLinkingScreen(
 
                     Box(modifier = Modifier.focusRequester(focusRequester)) {
                         FilterButton(
-                            text = if (state.isLoading) "Generando..." else "Generar nuevo código",
+                            text = if (state.isLoading) stringResource(R.string.linking_generating) else stringResource(R.string.linking_generate_new),
                             isActive = false,
                             onClick = { viewModel.loadQrAndListen() }
                         )

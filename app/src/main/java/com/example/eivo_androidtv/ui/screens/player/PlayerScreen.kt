@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.res.stringResource
 import androidx.media3.common.MimeTypes.APPLICATION_M3U8
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
@@ -80,8 +81,12 @@ fun PlayerScreen(
         }
         is PlayerUiState.Error -> {
             Box(Modifier.fillMaxSize().background(Color.Black)) {
+                val errorMessage = stringResource(
+                    state.resId,
+                    *state.args.toTypedArray()
+                )
                 ErrorStateComponent(
-                    isOffline = state.message.contains("UnknownHostException", ignoreCase = true),
+                    isOffline = state.isNetworkError,
                     onRetry = {
                         viewModel.retryLoadDetails()
                     }

@@ -30,6 +30,7 @@ import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.ui.components.ProfileIcon
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
@@ -102,7 +103,10 @@ fun ClubSelectionScreen(
             }
 
             clubs.isEmpty() -> {
-                NoContentState(message = "No hay clubes disponibles para este deporte en ${selectedRegion?.name}")
+                NoContentState(message = stringResource(
+                    R.string.no_clubs_available,
+                    selectedRegion?.name ?: ""
+                ))
             }
 
             else -> {
@@ -146,7 +150,7 @@ fun ClubSelectionScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Volver sin escoger club",
+                                    text = stringResource(R.string.back_without_club),
                                     color = Color.Black,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)

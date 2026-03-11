@@ -1,3 +1,52 @@
 <resources>
-    <string name="app_name">eivo_androidtv</string>
+    <string name="app_name">Eivo TV</string>
+    <string name="loading">Cargando...</string>
+    <string name="ad_label">Ad</string>
+    <string name="retry">REINTENTAR</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="watch_now">Ver ahora</string>
+    <string name="no_available">No disponible</string>
+
+    <string name="error_no_internet">SIN CONEXIÓN A INTERNET</string>
+    <string name="error_something_wrong">ALGO HA SALIDO MAL</string>
+    <string name="error_check_network">Revisa tu red y vuelve a intentarlo</string>
+    <string name="error_content_load_failed">No hemos podido cargar el contenido</string>
+    <string name="no_regions_available">No hay regiones disponibles</string>
+    <string name="no_featured_content">No hay contenido destacado</string>
+    <string name="no_matches_available">No hay partidos disponibles</string>
+    <string name="no_matches_live">No hay partidos en directo en %1$s para %2$s</string>
+    <string name="no_matches_club">Este club no tiene partidos programados</string>
+    <string name="no_clubs_available">No hay clubes disponibles para este deporte en %1$s</string>
+    <string name="no_available_subscription">No tienes suscripción activa para este evento.</string>
+    <string name="error_loading_video">Error al cargar el video: %1$s</string>
+
+    <string name="linking_qr_instruction">Para vincular tu cuenta en esta TV\nescanea el código QR desde tu App de eivo</string>
+    <string name="linking_manual_instruction">o introduce el código manualmente en tu App</string>
+    <string name="linking_generate_new">Generar nuevo código</string>
+    <string name="linking_generating">Generando...</string>
+
+    <string name="profile_title">Tu suscripción</string>
+    <string name="profile_no_subscription">SIN SUSCRIPCIÓN ACTIVA</string>
+    <string name="profile_unlink_desc">Desvincular dispositivo de esta cuenta de eivo</string>
+    <string name="profile_unlink_button">Desvincular dispositivo</string>
+    <string name="profile_available_for_me">Disponible para mi</string>
+    <string name="profile_stat_matchdays">Jornadas de tu equipo</string>
+    <string name="profile_stat_summaries">Resúmenes</string>
+    <string name="profile_stat_highlights">Jugadas favoritas</string>
+    <string name="profile_since_date">Desde el %1$s</string>
+    <string name="profile_mock_value">Mock</string>
+
+    <string name="unlink_confirmation_title">¿Seguro que quieres desvincular el dispositivo de esta cuenta de eivo?</string>
+
+    <string name="matches_view_live">Ver directos</string>
+    <string name="matches_exit_live">Salir de directos</string>
+    <string name="matches_choose_club">Escoge tu club</string>
+    <string name="matches_view_all_clubs">Ver todos los clubes</string>
+    <string name="matches_today">HOY</string>
+
+    <string name="player_keep_watching">Seguir viendo</string>
+    <string name="player_no_name">SIN NOMBRE</string>
+
+    <string name="back_without_club">Volver sin escoger club</string>
 </resources>

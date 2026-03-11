@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -148,7 +149,7 @@ fun PauseScreen(
                     Spacer(Modifier.height(10.dp))
 
                     Text(
-                        text = detalle.nombre?.uppercase() ?: "SIN NOMBRE",
+                        text = detalle.nombre?.uppercase() ?: stringResource(R.string.player_no_name),
                         color = Color.White,
                         fontSize = 18.sp,
                         lineHeight = 22.sp,
@@ -189,7 +190,7 @@ fun PauseScreen(
                             )
                             Spacer(Modifier.width(4.dp))
                             Text(
-                                "Seguir viendo",
+                                stringResource(R.string.player_keep_watching),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -212,7 +213,7 @@ fun PauseScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Ad",
+                text = stringResource(R.string.ad_label),
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold

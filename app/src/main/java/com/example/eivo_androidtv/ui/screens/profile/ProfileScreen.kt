@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -119,7 +120,7 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.height(40.dp))
 
                                 Text(
-                                    "Desvincular dispositivo de esta cuenta de eivo",
+                                    stringResource(R.string.profile_unlink_desc),
                                     color = Color.White,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
@@ -143,7 +144,7 @@ fun ProfileScreen(
                                         )
                                     ) {
                                         Text(
-                                            "Desvincular dispositivo",
+                                            stringResource(R.string.profile_unlink_button),
                                             color = Color.White,
                                             fontSize = 14.sp,
                                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
@@ -209,7 +210,7 @@ fun UnlinkConfirmationScreen(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Seguro que quieres desvincular el dispositivo de esta cuenta de eivo",
+                text = stringResource(R.string.unlink_confirmation_title),
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -219,10 +220,10 @@ fun UnlinkConfirmationScreen(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                DialogButton(text = "Sí", onClick = onConfirm)
+                DialogButton(text = stringResource(R.string.yes), onClick = onConfirm)
 
                 DialogButton(
-                    text = "No",
+                    text = stringResource(R.string.no),
                     onClick = onDismiss,
                     modifier = Modifier.focusRequester(focusRequester)
                 )
@@ -274,11 +275,11 @@ fun StatsSection(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(20.dp))
-        Text("Disponible para mi", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(stringResource(R.string.profile_available_for_me), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(16.dp))
-        StatRow("Jornadas de tu equipo", jornadas.toString())
-        StatRow("Resúmenes", eventos.toString())
-        StatRow("Jugadas favoritas", "Mock")
+        StatRow(stringResource(R.string.profile_stat_matchdays), jornadas.toString())
+        StatRow(stringResource(R.string.profile_stat_summaries), eventos.toString())
+        StatRow(stringResource(R.string.profile_stat_highlights), "Mock")
     }
 }
 
@@ -298,7 +299,7 @@ fun SubscriptionCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Tu suscripción", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.profile_title), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Text(user?.email ?: "", color = Color.White, fontSize = 12.sp)
             }
 
@@ -309,7 +310,7 @@ fun SubscriptionCard(
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        suscripcion?.nombre?.uppercase() ?: "SIN SUSCRIPCIÓN ACTIVA",
+                        suscripcion?.nombre?.uppercase() ?: stringResource(R.string.profile_no_subscription),
                         color = Color.White,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp
@@ -338,7 +339,7 @@ fun SubscriptionCard(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            val fechaInicio = user?.start_sub_date ?: "No disponible"
+            val fechaInicio = user?.start_sub_date ?: stringResource(R.string.no_available)
             Text(
                 "Desde el $fechaInicio",
                 color = Color.White,

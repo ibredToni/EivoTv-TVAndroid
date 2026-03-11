@@ -46,7 +46,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
@@ -166,9 +166,14 @@ fun MatchesScreen(
                     }
                     matches.isEmpty() -> {
                         val emptyMessage = when {
-                            onlyDirectos -> "No hay partidos en directo en ${selectedRegion?.name} para $currentSportName"
-                            filterClubId != null -> "Este club no tiene partidos programados"
-                            else -> "No hay partidos disponibles"
+                            onlyDirectos -> stringResource(
+                                R.string.no_matches_live,
+                                selectedRegion?.name ?: "",
+                                currentSportName
+
+                            )
+                            filterClubId != null -> stringResource(R.string.no_matches_club)
+                            else -> stringResource(R.string.no_matches_available)
                         }
                         NoContentState(message = emptyMessage)
                     }
@@ -214,7 +219,7 @@ fun FilterSecondaryBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         FilterButton(
-            text = if (onlyDirectos) "Salir de directos" else "Ver directos",
+            text = if (onlyDirectos) stringResource(R.string.matches_exit_live) else stringResource(R.string.matches_view_live),
             isActive = onlyDirectos,
             showLiveDot = !onlyDirectos,
             onClick = onToggleDirectos
@@ -257,7 +262,7 @@ fun FilterSecondaryBar(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
                     IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
                     Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault()).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                     IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
                 }
@@ -267,7 +272,7 @@ fun FilterSecondaryBar(
         Spacer(modifier = Modifier.weight(1f))
 
         FilterButton(
-            text = if (hasClubFilter) "Ver todos los clubes" else "Escoge tu club",
+            text = if (hasClubFilter) stringResource(R.string.matches_view_all_clubs) else stringResource(R.string.matches_choose_club),
             isActive = hasClubFilter,
             onClick = { if (hasClubFilter) onClearClubFilter() else onNavigateToClubSelection() }
         )
@@ -278,8 +283,8 @@ fun DateLabel(date: LocalDate, isSelected: Boolean) {
     val today = LocalDate.now()
 
     val dayName = when {
-        date.isEqual(today) -> "HOY"
-        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es", "ES"))
+        date.isEqual(today) -> stringResource(R.string.matches_today)
+        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
             .uppercase().replace(".", "")
     }
 

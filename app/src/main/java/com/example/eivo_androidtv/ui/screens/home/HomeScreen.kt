@@ -40,11 +40,7 @@ import com.example.eivo_androidtv.ui.components.ProfileIcon
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import android.os.Build
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.ui.res.stringResource
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.NoContentState
@@ -123,7 +119,7 @@ fun HomeScreen(
             }
 
             regions.isEmpty() -> {
-                NoContentState("No hay regiones disponibles")
+                NoContentState(stringResource(R.string.no_regions_available))
             }
 
             else -> {
@@ -183,7 +179,7 @@ fun HomeScreen(
                                 Modifier.fillMaxSize().weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No hay contenido destacado", color = Color.Gray)
+                                Text(stringResource(R.string.no_featured_content), color = Color.Gray)
                             }
                         }
                     }
@@ -374,7 +370,7 @@ fun HeroBanner(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Ver ahora", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Bold)
                             }
                         }
 
