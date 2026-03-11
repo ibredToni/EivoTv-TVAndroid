@@ -40,6 +40,13 @@ fun PauseScreen(
 
     val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidthPx = with(androidx.compose.ui.platform.LocalDensity.current) {
+        configuration.screenWidthDp.dp.toPx()
+    }
+
+    val gradientEndEdge = screenWidthPx * 0.5f
+
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(100)
         focusRequester.requestFocus()
@@ -50,37 +57,31 @@ fun PauseScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .weight(0.32f)
-                    .fillMaxHeight()
-                    .background(Color(0xFF070A0D))
-            )
 
-            Box(modifier = Modifier.weight(0.68f).fillMaxHeight()) {
                 AsyncImage(
                     model = pauseAd?.url,
                     contentDescription = "Publicidad",
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black),
-                    contentScale = ContentScale.FillBounds,
+                        .fillMaxSize(),
+                    contentScale = ContentScale.Crop,
                     error = null
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.2f)
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(Color(0xFF070A0D), Color.Transparent)
-                            )
-                        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF070A0D),
+                            Color(0xFF070A0D).copy(alpha = 0.8f),
+                            Color.Transparent
+                        ),
+                        startX = 0f,
+                        endX = gradientEndEdge
+                    )
                 )
-            }
-        }
+        )
 
         BackgroundFoci(MaterialTheme.colorScheme.primary)
 
