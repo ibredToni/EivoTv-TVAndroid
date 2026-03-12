@@ -70,7 +70,6 @@ fun HomeScreen(
     val selectedSportName = sports.find { it.id.toString() == selectedSportId }?.nombre ?: ""
     val token = remember { sessionManager.fetchAuthToken() ?: "" }
     var errorOccurred by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
     var isOffline by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -86,8 +85,14 @@ fun HomeScreen(
         } catch (e: java.net.UnknownHostException) {
             isOffline = true
             errorOccurred = true
+        } catch (e: java.net.ConnectException) {
+            isOffline = true
+            errorOccurred = true
+        } catch (e: java.io.IOException) {
+            isOffline = true
+            errorOccurred = true
         } catch (e: Exception) {
-            errorMessage = e.message ?: "Error desconocido"
+            isOffline = false
             errorOccurred = true
         } finally {
             isLoading = false

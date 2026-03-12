@@ -176,25 +176,8 @@ fun UnlinkConfirmationScreen(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             painter = painterResource(id = R.drawable.fondo_estadio),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            alpha = 0.5f
+            contentScale = ContentScale.Crop
         )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        0.0f to Color.Transparent,
-                        0.1f to Color.Black.copy(alpha = 0.4f),
-                        0.5f to Color.Black.copy(alpha = 0.95f),
-                        1.0f to Color.Black,
-                        radius = 1800f
-                    )
-                )
-        )
-
-        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Column(
             modifier = Modifier.fillMaxSize(),

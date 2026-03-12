@@ -124,7 +124,7 @@ fun PauseScreen(
                                 )
                                 .build(),
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(60.dp),
                             contentScale = ContentScale.Fit,
                             error = null
                         )
@@ -140,7 +140,7 @@ fun PauseScreen(
                                 )
                                 .build(),
                             contentDescription = null,
-                            modifier = Modifier.size(40.dp),
+                            modifier = Modifier.size(60.dp),
                             contentScale = ContentScale.Fit,
                             error = null
                         )

@@ -68,7 +68,14 @@ fun ClubSelectionScreen(
             } catch (e: java.net.UnknownHostException) {
                 isOffline = true
                 errorOccurred = true
+            } catch (e: java.net.ConnectException) {
+                isOffline = true
+                errorOccurred = true
+            } catch (e: java.io.IOException) {
+                isOffline = true
+                errorOccurred = true
             } catch (e: Exception) {
+                isOffline = false
                 errorOccurred = true
             } finally {
                 isLoading = false

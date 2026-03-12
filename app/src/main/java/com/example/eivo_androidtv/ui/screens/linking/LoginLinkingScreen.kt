@@ -58,23 +58,8 @@ fun LoginLinkingScreen(
             painter = painterResource(id = R.drawable.aficion),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            alpha = 0.6f
+            contentScale = ContentScale.Crop
         )
-
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.radialGradient(
-                    0.0f to Color.Transparent,
-                    0.1f to Color.Black.copy(alpha = 0.4f),
-                    0.5f to Color.Black.copy(alpha = 0.95f),
-                    1.0f to Color.Black,
-                    radius = dynamicRadius
-                )
-            )
-        )
-
-        BackgroundFoci(MaterialTheme.colorScheme.primary)
 
         Column(
             modifier = Modifier.fillMaxSize(),

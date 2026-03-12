@@ -70,10 +70,12 @@ fun MatchesScreen(
     onNavigateToProfile: () -> Unit,
     apiService: EivoApiService,
     sports: List<DeporteDto>,
-    onSportSelected: (String) -> Unit
+    onSportSelected: (String) -> Unit,
+    initialDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
 ) {
     var onlyDirectos by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedDate by remember(initialDate) { mutableStateOf(initialDate) }
     var matches by remember { mutableStateOf<List<EventoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var currentSportId by remember(initialSport) { mutableStateOf(initialSport) }
@@ -97,7 +99,14 @@ fun MatchesScreen(
             } catch (e: java.net.UnknownHostException) {
                 isOffline = true
                 errorOccurred = true
+            } catch (e: java.net.ConnectException) {
+                isOffline = true
+                errorOccurred = true
+            } catch (e: java.io.IOException) {
+                isOffline = true
+                errorOccurred = true
             } catch (e: Exception) {
+                isOffline = false
                 errorOccurred = true
             } finally {
                 isLoading = false
@@ -146,7 +155,10 @@ fun MatchesScreen(
                 onlyDirectos = onlyDirectos,
                 onToggleDirectos = { onlyDirectos = !onlyDirectos },
                 selectedDate = selectedDate,
-                onDateChange = { selectedDate = it }
+                onDateChange = {
+                    selectedDate = it
+                    onDateSelected(it)
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))

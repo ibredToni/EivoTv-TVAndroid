@@ -39,6 +39,7 @@ import com.example.eivo_androidtv.ui.screens.matches.MatchesScreen
 import com.example.eivo_androidtv.ui.screens.player.PlayerScreen
 import com.example.eivo_androidtv.utils.Constants
 import com.example.eivo_androidtv.utils.NetworkModule
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTvMaterial3Api::class)
@@ -160,7 +161,11 @@ fun AppNavigation() {
                 sports = globalSports,
                 sessionManager = sessionManager,
                 onNavigateToMatches = { sportId ->
-                    globalSportId = sportId //
+                    globalSportId = sportId
+                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                        "selectedDate",
+                        LocalDate.now().toString()
+                    )
                     navController.navigate(Screen.Matches.createRoute(sportId))
                 },
                 onNavigateToProfile = {
@@ -179,6 +184,10 @@ fun AppNavigation() {
                 .getStateFlow<String?>("selectedClub", null)
                 .collectAsStateWithLifecycle()
 
+            val savedDateString by backStackEntry.savedStateHandle
+                .getStateFlow<String?>("selectedDate", LocalDate.now().toString())
+                .collectAsStateWithLifecycle()
+
             MatchesScreen(
                 initialSport = if (globalSportId.isNotEmpty()) globalSportId else sportIdFromRoute,
                 selectedRegion = globalRegion,
@@ -187,6 +196,10 @@ fun AppNavigation() {
                 apiService = apiService,
                 sports = globalSports,
                 onSportSelected = { globalSportId = it },
+                initialDate = LocalDate.parse(savedDateString),
+                onDateSelected = { newDate ->
+                    backStackEntry.savedStateHandle["selectedDate"] = newDate.toString()
+                },
                 onNavigateToClubSelection = {
                     navController.navigate(Screen.ClubSelection.route)
                 },
