@@ -142,7 +142,7 @@ fun MatchCard(
                             text = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}",
                             color = Color.White,
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Bold,
                             lineHeight = 18.sp
                         )
                         Spacer(modifier = Modifier.weight(1f))

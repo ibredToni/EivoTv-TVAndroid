@@ -320,7 +320,7 @@ fun HeroBanner(
                             color = Color.White,
                             fontSize = 22.sp,
                             lineHeight = 34.sp,
-                            fontWeight = FontWeight.Black,
+                            fontWeight = FontWeight.Bold,
                             maxLines = 3
                         )
                         Text(
@@ -373,10 +373,10 @@ fun HeroBanner(
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_play),
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
 
@@ -390,8 +390,8 @@ fun HeroBanner(
                                     val isSelected = pagerState.currentPage == index
                                     Box(
                                         modifier = Modifier
-                                            .height(6.dp)
-                                            .width(if (isSelected) 14.dp else 4.dp)
+                                            .height(4.dp)
+                                            .width(if (isSelected) 10.dp else 4.dp)
                                             .background(
                                                 color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
                                                 shape = CircleShape
