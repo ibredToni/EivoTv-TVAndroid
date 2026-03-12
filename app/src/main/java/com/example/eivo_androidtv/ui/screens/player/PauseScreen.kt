@@ -14,7 +14,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -28,6 +27,7 @@ import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -36,6 +36,10 @@ fun PauseScreen(
     detalle: EventoDetalleDto,
     ads: List<AdDto>
 ) {
+
+    BackHandler {
+        onResume()
+    }
 
     val pauseAd = ads.find { it.position == "pause" }
 
