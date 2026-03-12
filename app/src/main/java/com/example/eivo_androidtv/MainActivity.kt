@@ -37,23 +37,16 @@ import com.example.eivo_androidtv.ui.navigation.Screen
 import com.example.eivo_androidtv.ui.screens.linking.LinkingViewModel
 import com.example.eivo_androidtv.ui.screens.matches.MatchesScreen
 import com.example.eivo_androidtv.ui.screens.player.PlayerScreen
+import com.example.eivo_androidtv.ui.screens.splash.SplashScreen
 import com.example.eivo_androidtv.utils.Constants
 import com.example.eivo_androidtv.utils.NetworkModule
 import java.time.LocalDate
+import androidx.tv.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val sessionManager = SessionManager(this)
-        val sharedClient = NetworkModule.createOkHttpClient(sessionManager)
-
-        val imageLoader = coil.ImageLoader.Builder(this)
-            .okHttpClient(sharedClient)
-            .build()
-
-        coil.Coil.setImageLoader(imageLoader)
 
         setContent {
             Eivo_androidtvTheme {
@@ -76,184 +69,204 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val sessionManager = remember { SessionManager(context) }
-    val apiService = remember {
-        EivoApiService(
-            client = NetworkModule.createOkHttpClient(sessionManager),
-            baseUrl = Constants.BASE_URL
+    var showSplash by remember { mutableStateOf(true) }
+
+
+    if (showSplash) {
+        SplashScreen(
+            eivoColor = MaterialTheme.colorScheme.primary,
+            onSplashFinished = { showSplash = false }
         )
-    }
-
-    // --- ESTADO DE NAVEGACIÓN ---
-    val initialToken = remember { sessionManager.fetchAuthToken() }
-    var startRoute by remember { mutableStateOf(if (initialToken.isNullOrEmpty()) Screen.Linking.route else Screen.Home.route) }
-
-    // --- ESTADO GLOBAL ---
-    var globalRegions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
-    var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
-    var globalSports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
-    var globalSportId by remember { mutableStateOf("") }
-
-    LaunchedEffect(startRoute, initialToken) {
-        val currentToken = sessionManager.fetchAuthToken()
-        if (!currentToken.isNullOrEmpty() && globalRegions.isEmpty()) {
-            try {
-                val fetchedRegions = apiService.fetchComunidades()
-                globalRegions = fetchedRegions
-                if (globalRegion == null && fetchedRegions.isNotEmpty()) {
-                    globalRegion = fetchedRegions.first()
-                }
-            } catch (e: Exception) {
-                //android.util.Log.e("NAV_ERROR", "Error: ${e.message}")
-                if (e.message?.contains("401") == true) {
-                    sessionManager.clearSession()
-                    navController.navigate(Screen.Linking.route) { popUpTo(0) }
-                }
-            }
+    } else {
+        val sessionManager = remember { SessionManager(context) }
+        LaunchedEffect(Unit) {
+            val sharedClient = NetworkModule.createOkHttpClient(sessionManager)
+            val imageLoader = coil.ImageLoader.Builder(context)
+                .okHttpClient(sharedClient)
+                .build()
+            coil.Coil.setImageLoader(imageLoader)
         }
-    }
-
-    LaunchedEffect(globalRegion) {
-        globalRegion?.let { region ->
-            try {
-                val fetched = apiService.fetchDeportes(region.id.toString())
-                globalSports = fetched
-                if (globalSportId.isEmpty() && fetched.isNotEmpty()) {
-                    globalSportId = fetched.first().id.toString()
-                }
-            } catch (e: Exception) {
-                //android.util.Log.e("NAV_ERROR", "Error cargando deportes: ${e.message}")
-            }
+        val apiService = remember {
+            EivoApiService(
+                client = NetworkModule.createOkHttpClient(sessionManager),
+                baseUrl = Constants.BASE_URL
+            )
         }
-    }
 
-    NavHost(
-        navController = navController,
-        startDestination = startRoute
-    ) {
-        composable(Screen.Linking.route) {
-            val repository = remember { AuthRepositoryImpl(apiService) }
-            val getQrUseCase = remember { GetQrCodeUseCase(repository) }
-            val listenUseCase = remember { ListenLoginUseCase(repository) }
+        // --- ESTADO DE NAVEGACIÓN ---
+        var currentToken by remember { mutableStateOf(sessionManager.fetchAuthToken()) }
+        var isInitialDataLoading by remember { mutableStateOf(false) }
 
-            val linkingViewModel: LinkingViewModel = viewModel {
-                LinkingViewModel(getQrUseCase, listenUseCase, sessionManager)
-            }
+        // --- ESTADO GLOBAL ---
+        var globalRegions by remember { mutableStateOf<List<ComunidadDto>>(emptyList()) }
+        var globalRegion by remember { mutableStateOf<ComunidadDto?>(null) }
+        var globalSports by remember { mutableStateOf<List<DeporteDto>>(emptyList()) }
+        var globalSportId by remember { mutableStateOf("") }
 
-            LoginLinkingScreen(
-                viewModel = linkingViewModel,
-                onNavigateToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Linking.route) { inclusive = true }
+        LaunchedEffect(currentToken) {
+            if (!currentToken.isNullOrEmpty() && globalRegions.isEmpty()) {
+                isInitialDataLoading = true
+                try {
+                    val fetchedRegions = apiService.fetchComunidades()
+                    globalRegions = fetchedRegions
+                    if (globalRegion == null && fetchedRegions.isNotEmpty()) {
+                        globalRegion = fetchedRegions.first()
                     }
-                }
-            )
-        }
-
-        composable(Screen.Home.route) {
-            HomeScreen(
-                apiService = apiService,
-                regions = globalRegions,
-                selectedRegion = globalRegion,
-                onRegionSelected = { globalRegion = it },
-                selectedSportId = globalSportId,
-                onSportSelected = { globalSportId = it },
-                sports = globalSports,
-                sessionManager = sessionManager,
-                onNavigateToMatches = { sportId ->
-                    globalSportId = sportId
-                    navController.currentBackStackEntry?.savedStateHandle?.set(
-                        "selectedDate",
-                        LocalDate.now().toString()
-                    )
-                    navController.navigate(Screen.Matches.createRoute(sportId))
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                },
-                onNavigateToPlayer = { eventId ->
-                    navController.navigate(Screen.Player.createRoute(eventId))
-                },
-            )
-        }
-
-        composable(Screen.Matches.route) { backStackEntry ->
-            val sportIdFromRoute = backStackEntry.arguments?.getString("sport") ?: globalSportId
-
-            val selectedClubId by backStackEntry.savedStateHandle
-                .getStateFlow<String?>("selectedClub", null)
-                .collectAsStateWithLifecycle()
-
-            val savedDateString by backStackEntry.savedStateHandle
-                .getStateFlow<String?>("selectedDate", LocalDate.now().toString())
-                .collectAsStateWithLifecycle()
-
-            MatchesScreen(
-                initialSport = if (globalSportId.isNotEmpty()) globalSportId else sportIdFromRoute,
-                selectedRegion = globalRegion,
-                onRegionSelected = { globalRegion = it },
-                filterClubId = selectedClubId,
-                apiService = apiService,
-                sports = globalSports,
-                onSportSelected = { globalSportId = it },
-                initialDate = LocalDate.parse(savedDateString),
-                onDateSelected = { newDate ->
-                    backStackEntry.savedStateHandle["selectedDate"] = newDate.toString()
-                },
-                onNavigateToClubSelection = {
-                    navController.navigate(Screen.ClubSelection.route)
-                },
-                onClearClubFilter = {
-                    backStackEntry.savedStateHandle["selectedClub"] = null
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                },
-                onNavigateToPlayer = { eventId ->
-                    navController.navigate(Screen.Player.createRoute(eventId))
-                }
-            )
-        }
-
-        composable(Screen.ClubSelection.route) {
-            ClubSelectionScreen(
-                selectedRegion = globalRegion,
-                apiService = apiService,
-                selectedSportId = globalSportId,
-                onClubSelected = { clubId ->
-                    navController.previousBackStackEntry?.savedStateHandle?.set("selectedClub", clubId)
-                    navController.popBackStack()
-                },
-                sports = globalSports,
-                onSportSelected = { globalSportId = it },
-                onBackWithoutSelection = {
-                    navController.popBackStack()
-                },
-                onNavigateToProfile = {
-                    navController.navigate(Screen.Profile.route)
-                }
-            )
-        }
-
-        composable(Screen.Profile.route) {
-            ProfileScreen(
-                sessionManager = sessionManager,
-                apiService = apiService,
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Linking.route) {
-                        popUpTo(0) { inclusive = true }
+                } catch (e: Exception) {
+                    //android.util.Log.e("NAV_ERROR", "Error: ${e.message}")
+                    if (e.message?.contains("401") == true) {
+                        sessionManager.clearSession()
+                        navController.navigate(Screen.Linking.route) { popUpTo(0) }
                     }
+                } finally {
+                    isInitialDataLoading = false
                 }
-            )
+            }
         }
 
-        composable(Screen.Player.route) { backStackEntry ->
-            val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
-            PlayerScreen(
-                eventId = eventId,
-                apiService = apiService,
-                onBack = { navController.popBackStack() }
-            )
+        LaunchedEffect(globalRegion) {
+            globalRegion?.let { region ->
+                try {
+                    val fetched = apiService.fetchDeportes(region.id.toString())
+                    globalSports = fetched
+                    if (globalSportId.isEmpty() && fetched.isNotEmpty()) {
+                        globalSportId = fetched.first().id.toString()
+                    }
+                } catch (e: Exception) {
+                    //android.util.Log.e("NAV_ERROR", "Error cargando deportes: ${e.message}")
+                }
+            }
+        }
+        NavHost(
+            navController = navController,
+            startDestination = if (currentToken.isNullOrEmpty()) Screen.Linking.route else Screen.Home.route
+        ) {
+            composable(Screen.Linking.route) {
+                val repository = remember { AuthRepositoryImpl(apiService) }
+                val getQrUseCase = remember { GetQrCodeUseCase(repository) }
+                val listenUseCase = remember { ListenLoginUseCase(repository) }
+
+                val linkingViewModel: LinkingViewModel = viewModel {
+                    LinkingViewModel(getQrUseCase, listenUseCase, sessionManager)
+                }
+
+                LoginLinkingScreen(
+                    viewModel = linkingViewModel,
+                    onNavigateToHome = {
+                        currentToken = sessionManager.fetchAuthToken()
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Linking.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    apiService = apiService,
+                    regions = globalRegions,
+                    selectedRegion = globalRegion,
+                    onRegionSelected = { globalRegion = it },
+                    selectedSportId = globalSportId,
+                    onSportSelected = { globalSportId = it },
+                    sports = globalSports,
+                    sessionManager = sessionManager,
+                    isInitialLoading = isInitialDataLoading,
+                    onNavigateToMatches = { sportId ->
+                        globalSportId = sportId
+                        navController.currentBackStackEntry?.savedStateHandle?.set(
+                            "selectedDate",
+                            LocalDate.now().toString()
+                        )
+                        navController.navigate(Screen.Matches.createRoute(sportId))
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.Profile.route)
+                    },
+                    onNavigateToPlayer = { eventId ->
+                        navController.navigate(Screen.Player.createRoute(eventId))
+                    },
+                )
+            }
+
+            composable(Screen.Matches.route) { backStackEntry ->
+                val sportIdFromRoute = backStackEntry.arguments?.getString("sport") ?: globalSportId
+
+                val selectedClubId by backStackEntry.savedStateHandle
+                    .getStateFlow<String?>("selectedClub", null)
+                    .collectAsStateWithLifecycle()
+
+                val savedDateString by backStackEntry.savedStateHandle
+                    .getStateFlow<String?>("selectedDate", LocalDate.now().toString())
+                    .collectAsStateWithLifecycle()
+
+                MatchesScreen(
+                    initialSport = if (globalSportId.isNotEmpty()) globalSportId else sportIdFromRoute,
+                    selectedRegion = globalRegion,
+                    onRegionSelected = { globalRegion = it },
+                    filterClubId = selectedClubId,
+                    apiService = apiService,
+                    sports = globalSports,
+                    onSportSelected = { globalSportId = it },
+                    initialDate = LocalDate.parse(savedDateString),
+                    onDateSelected = { newDate ->
+                        backStackEntry.savedStateHandle["selectedDate"] = newDate.toString()
+                    },
+                    onNavigateToClubSelection = {
+                        navController.navigate(Screen.ClubSelection.route)
+                    },
+                    onClearClubFilter = {
+                        backStackEntry.savedStateHandle["selectedClub"] = null
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.Profile.route)
+                    },
+                    onNavigateToPlayer = { eventId ->
+                        navController.navigate(Screen.Player.createRoute(eventId))
+                    }
+                )
+            }
+
+            composable(Screen.ClubSelection.route) {
+                ClubSelectionScreen(
+                    selectedRegion = globalRegion,
+                    apiService = apiService,
+                    selectedSportId = globalSportId,
+                    onClubSelected = { clubId ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("selectedClub", clubId)
+                        navController.popBackStack()
+                    },
+                    sports = globalSports,
+                    onSportSelected = { globalSportId = it },
+                    onBackWithoutSelection = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.Profile.route)
+                    }
+                )
+            }
+
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    sessionManager = sessionManager,
+                    apiService = apiService,
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.Linking.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Player.route) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                PlayerScreen(
+                    eventId = eventId,
+                    apiService = apiService,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

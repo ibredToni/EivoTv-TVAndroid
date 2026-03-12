@@ -60,6 +60,7 @@ fun HomeScreen(
     onNavigateToPlayer: (String) -> Unit,
     regions: List<ComunidadDto>,
     sessionManager: SessionManager,
+    isInitialLoading: Boolean,
 ) {
     var destacados by remember { mutableStateOf<List<DestacadoDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -106,7 +107,7 @@ fun HomeScreen(
     EivoScreenContainer {
 
         when {
-            isLoading -> {
+            isLoading|| isInitialLoading -> {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
@@ -312,12 +313,12 @@ fun HeroBanner(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(32.dp)
-                            .width(IntrinsicSize.Min)
+                            .fillMaxWidth(0.7f)
                     ) {
                         Text(
                             text = data.nombre.uppercase(),
                             color = Color.White,
-                            fontSize = 28.sp,
+                            fontSize = 22.sp,
                             lineHeight = 34.sp,
                             fontWeight = FontWeight.Black,
                             maxLines = 3
@@ -325,12 +326,12 @@ fun HeroBanner(
                         Text(
                             text = data.descripcion,
                             color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 14.sp
+                            fontSize = 12.sp
                         )
                         Text(
                             text = data.inicio,
                             color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 14.sp
+                            fontSize = 12.sp
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
