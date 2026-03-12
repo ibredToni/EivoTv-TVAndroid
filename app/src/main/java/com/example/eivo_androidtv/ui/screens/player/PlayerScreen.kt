@@ -2,7 +2,9 @@ package com.example.eivo_androidtv.ui.screens.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,14 +21,17 @@ import androidx.media3.ui.PlayerView
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.material.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.MimeTypes.APPLICATION_M3U8
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
 import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.utils.NetworkModule
@@ -150,22 +155,42 @@ fun VideoPlayer(
         onDispose { exoPlayer.release() }
     }
 
-    AndroidView(
-        factory = { ctx ->
-            PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = true
-                setBackgroundColor(android.graphics.Color.BLACK)
-                isFocusable = true
-                isFocusableInTouchMode = true
-                requestFocus()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = true
+                    scrollBarSize = 0
+                    isVerticalScrollBarEnabled = false
+                    isHorizontalScrollBarEnabled = false
+                    overScrollMode = android.view.View.OVER_SCROLL_NEVER
+                    isScrollContainer = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    setBackgroundColor(android.graphics.Color.BLACK)
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                    requestFocus()
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        defaultFocusHighlightEnabled = false
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .clipToBounds(),
+            update = { playerView ->
+                if (!isPaused) {
+                    playerView.requestFocus()
+                }
             }
-        },
-        modifier = Modifier.fillMaxSize(),
-        update = { playerView ->
-            if (!isPaused) {
-                playerView.requestFocus()
-            }
-        }
-    )
+        )
+    }
+
+
 }

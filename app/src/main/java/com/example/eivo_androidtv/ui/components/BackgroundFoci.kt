@@ -10,12 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 
 @Composable
 fun BackgroundFoci(eivoColor: Color) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(modifier = Modifier
+        .fillMaxSize()
+        .graphicsLayer(renderEffect = null)
+    ) {
         val w = size.width
         val h = size.height
         val dynamicBlur = w * 0.0625f

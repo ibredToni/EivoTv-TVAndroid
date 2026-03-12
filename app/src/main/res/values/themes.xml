@@ -1,4 +1,7 @@
 <resources>
+    <style name="Theme.Eivo_androidtv" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorControlHighlight">#FFFFFF</item>
 
-    <style name="Theme.Eivo_androidtv" parent="Theme.AppCompat.DayNight.NoActionBar" />
+        <item name="android:colorControlHighlight">#FFFFFF</item>
+    </style>
 </resources>
