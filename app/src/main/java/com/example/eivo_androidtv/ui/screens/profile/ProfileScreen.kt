@@ -204,10 +204,13 @@ fun SubscriptionCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.1f)))
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White))
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         suscripcion?.nombre?.uppercase() ?: stringResource(R.string.profile_no_subscription),
@@ -228,24 +231,28 @@ fun SubscriptionCard(
                     )
                 }
 
-                AsyncImage(
-                    model = suscripcion?.escudo,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(80.dp),
-                    error = null,
-                    contentScale = ContentScale.Fit
-                )
+                Spacer(modifier = Modifier.width(120.dp))
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            val fechaInicio = user?.start_sub_date ?: stringResource(R.string.no_available)
+            Spacer(modifier = Modifier.height(42.dp))
+            val fechaInicio = user?.start_sub_date?.substringBefore(" ") ?: stringResource(R.string.no_available)
             Text(
                 "Desde el $fechaInicio",
                 color = Color.White,
                 fontSize = 11.sp
             )
         }
+
+        AsyncImage(
+            model = suscripcion?.escudo,
+            contentDescription = null,
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.BottomEnd)
+                .padding(top = 28.dp, start = 20.dp),
+            error = null,
+            contentScale = ContentScale.Fit
+        )
     }
 }
 
