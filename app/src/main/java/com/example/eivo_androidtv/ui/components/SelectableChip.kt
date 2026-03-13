@@ -46,7 +46,7 @@ fun SelectableChip(
                 .padding(4.dp)
                 .clip(CircleShape)
                 .background(if (isSelected) Color(0xFFC0C0C0) else Color.White.copy(alpha = 0.1f))
-                .padding(horizontal = 20.dp, vertical = 6.dp),
+                .padding(horizontal = 20.dp, vertical = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(

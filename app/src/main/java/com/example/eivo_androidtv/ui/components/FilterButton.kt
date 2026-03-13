@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ClickableSurfaceDefaults
@@ -37,7 +38,8 @@ fun FilterButton(
     isActive: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    showLiveDot: Boolean = false
+    showLiveDot: Boolean = false,
+    fontSize: TextUnit = 14.sp
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -73,7 +75,7 @@ fun FilterButton(
                 Text(
                     text = text,
                     color = if (isActive) Color.Black else Color.White,
-                    fontSize = 14.sp,
+                    fontSize = fontSize,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )

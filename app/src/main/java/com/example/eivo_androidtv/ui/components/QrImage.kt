@@ -8,13 +8,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 
 @Composable
 fun QrImage(text: String, modifier: Modifier = Modifier) {
     val bitmap = remember(text) {
         val writer = QRCodeWriter()
-        val bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, 512, 512)
+        val hints = mapOf(EncodeHintType.MARGIN to 1)
+        val bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, 512, 512, hints)
         val w = bitMatrix.width
         val h = bitMatrix.height
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)

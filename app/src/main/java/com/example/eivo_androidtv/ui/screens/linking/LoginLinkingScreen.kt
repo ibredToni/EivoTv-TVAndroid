@@ -110,15 +110,19 @@ fun LoginLinkingScreen(
 
                     Box(
                         modifier = Modifier
-                            .width(240.dp)
+                            .widthIn(max = 240.dp)
                             .border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
                             .background(Color.Black.copy(alpha = 0.4f))
-                            .padding(all = 8.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = state.uuid,
-                            color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp,
+                            softWrap = true
                         )
                     }
 
@@ -128,7 +132,8 @@ fun LoginLinkingScreen(
                         FilterButton(
                             text = if (state.isLoading) stringResource(R.string.linking_generating) else stringResource(R.string.linking_generate_new),
                             isActive = false,
-                            onClick = { viewModel.loadQrAndListen() }
+                            onClick = { viewModel.loadQrAndListen() },
+                            fontSize = 20.sp
                         )
                     }
                 }

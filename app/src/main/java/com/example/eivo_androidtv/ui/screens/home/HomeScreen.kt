@@ -43,6 +43,7 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import com.example.eivo_androidtv.ui.components.ConfirmationDialog
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
@@ -287,7 +288,9 @@ fun HeroBanner(
             var isPageFocused by remember { mutableStateOf(false) }
 
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
                 shape = RectangleShape,
                 border = Border(
                     border = BorderStroke(
@@ -341,9 +344,10 @@ fun HeroBanner(
                             text = data.nombre.uppercase(),
                             color = Color.White,
                             fontSize = 38.sp,
-                            lineHeight = 34.sp,
+                            lineHeight = 42.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 3
+                            maxLines = 3,
+                            overflow = Ellipsis
                         )
                         Text(
                             text = data.descripcion,
@@ -408,12 +412,33 @@ fun HeroBanner(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                repeat(banners.size) { index ->
+                                val totalDots = banners.size
+                                val maxVisibleDots = 5
+
+                                val startDot = when {
+                                    totalDots <= maxVisibleDots -> 0
+                                    pagerState.currentPage < 3 -> 0
+                                    pagerState.currentPage > totalDots - 3 -> totalDots - maxVisibleDots
+                                    else -> pagerState.currentPage - 2
+                                }
+                                val endDot = (startDot + maxVisibleDots).coerceAtMost(totalDots)
+
+                                for (index in startDot until endDot) {
                                     val isSelected = pagerState.currentPage == index
+
+                                    val isEdge = (index == startDot && startDot > 0) ||
+                                            (index == endDot - 1 && endDot < totalDots)
+
+                                    val dotWidth = when {
+                                        isSelected -> 10.dp
+                                        isEdge -> 3.dp
+                                        else -> 4.dp
+                                    }
+
                                     Box(
                                         modifier = Modifier
-                                            .height(4.dp)
-                                            .width(if (isSelected) 10.dp else 4.dp)
+                                            .height(if (isEdge && !isSelected) 3.dp else 4.dp)
+                                            .width(dotWidth)
                                             .background(
                                                 color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
                                                 shape = CircleShape
