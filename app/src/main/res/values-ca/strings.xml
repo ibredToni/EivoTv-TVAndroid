@@ -7,6 +7,8 @@
     <string name="no">No</string>
     <string name="watch_now">Veure ara</string>
     <string name="no_available">No disponible</string>
+    <string name="btn_exit">Sortir</string>
+    <string name="btn_cancel">Cancel·lar</string>
 
     <string name="error_no_internet">SENSE CONNEXIÓ A INTERNET</string>
     <string name="error_something_wrong">ALGO HA ANAT MALAMENT</string>
@@ -38,6 +40,7 @@
     <string name="profile_mock_value">Mock</string>
 
     <string name="unlink_confirmation_title">Segur que vols desvincular el dispositiu d\'aquest compte d\'eivo?</string>
+    <string name="confirmation_exit">Estàs segur que vols sortir de l\'aplicació?</string>
 
     <string name="matches_view_live">Veure directes</string>
     <string name="matches_exit_live">Sortir de directos</string>

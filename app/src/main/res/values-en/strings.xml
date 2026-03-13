@@ -7,6 +7,8 @@
     <string name="no">No</string>
     <string name="watch_now">Watch now</string>
     <string name="no_available">Not available</string>
+    <string name="btn_exit">Exit</string>
+    <string name="btn_cancel">Cancel</string>
 
     <string name="error_no_internet">NO INTERNET CONNECTION</string>
     <string name="error_something_wrong">SOMETHING WENT WRONG</string>
@@ -38,6 +40,7 @@
     <string name="profile_mock_value">Mock</string>
 
     <string name="unlink_confirmation_title">Are you sure you want to unlink the device from this eivo account?</string>
+    <string name="confirmation_exit">Are you sure you want to exit the application?</string>
 
     <string name="matches_view_live">View live</string>
     <string name="matches_exit_live">Exit live</string>
