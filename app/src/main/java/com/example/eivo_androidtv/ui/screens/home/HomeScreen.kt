@@ -40,7 +40,10 @@ import com.example.eivo_androidtv.ui.components.ProfileIcon
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import android.os.Build
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.focusable
 import androidx.compose.ui.res.stringResource
+import com.example.eivo_androidtv.ui.components.ConfirmationDialog
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.NoContentState
@@ -73,6 +76,12 @@ fun HomeScreen(
     var errorOccurred by remember { mutableStateOf(false) }
     var isOffline by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    var showExitDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    BackHandler(enabled = !showExitDialog) {
+        showExitDialog = true
+    }
 
     val loadData = suspend {
         isLoading = true
@@ -108,7 +117,7 @@ fun HomeScreen(
 
         when {
             isLoading|| isInitialLoading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().focusable().focusRequester(remember { FocusRequester() }), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
             }
@@ -206,6 +215,19 @@ fun HomeScreen(
                 }
             }
         }
+
+        if (showExitDialog) {
+            ConfirmationDialog(
+                title = stringResource(R.string.confirmation_exit),
+                confirmText = stringResource(R.string.btn_exit),
+                dismissText = stringResource(R.string.btn_cancel),
+                onConfirm = {
+                    (context as? android.app.Activity)?.finish()
+                },
+                onDismiss = { showExitDialog = false }
+            )
+        }
+
     }
 }
 
