@@ -52,6 +52,7 @@ fun MatchCard(
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused }
+            .padding(4.dp)
     ) {
         Column(
             modifier = Modifier

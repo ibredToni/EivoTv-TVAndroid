@@ -340,7 +340,7 @@ fun HeroBanner(
                         Text(
                             text = data.nombre.uppercase(),
                             color = Color.White,
-                            fontSize = 22.sp,
+                            fontSize = 38.sp,
                             lineHeight = 34.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 3
@@ -348,12 +348,12 @@ fun HeroBanner(
                         Text(
                             text = data.descripcion,
                             color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 12.sp
+                            fontSize = 18.sp
                         )
                         Text(
                             text = data.inicio,
                             color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 12.sp
+                            fontSize = 18.sp
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -398,7 +398,7 @@ fun HeroBanner(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Normal, fontSize = 12.sp)
                             }
                         }
 
