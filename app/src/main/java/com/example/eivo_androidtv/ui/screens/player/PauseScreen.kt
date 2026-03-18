@@ -34,6 +34,7 @@ import androidx.activity.compose.BackHandler
 fun PauseScreen(
     onResume: () -> Unit,
     detalle: EventoDetalleDto,
+    backgroundImage: String?,
     ads: List<AdDto>
 ) {
 
@@ -101,12 +102,22 @@ fun PauseScreen(
                     .fillMaxSize()
                     .border(1.dp, Color.White.copy(alpha = 0.5f), RectangleShape)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.portero),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                if (!backgroundImage.isNullOrBlank()) {
+                    AsyncImage(
+                        model = backgroundImage,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.Center
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.portero),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
                 Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)))
 

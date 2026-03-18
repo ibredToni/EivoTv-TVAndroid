@@ -221,8 +221,8 @@ fun AppNavigation() {
                     onNavigateToProfile = {
                         navController.navigate(Screen.Profile.route)
                     },
-                    onNavigateToPlayer = { eventId ->
-                        navController.navigate(Screen.Player.createRoute(eventId))
+                    onNavigateToPlayer = { eventId, backgroundImage ->
+                        navController.navigate(Screen.Player.createRoute(eventId, backgroundImage))
                     }
                 )
             }
@@ -261,8 +261,10 @@ fun AppNavigation() {
 
             composable(Screen.Player.route) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                val backgroundImage = backStackEntry.arguments?.getString("backgroundImage")
                 PlayerScreen(
                     eventId = eventId,
+                    backgroundImage = backgroundImage,
                     apiService = apiService,
                     onBack = { navController.popBackStack() }
                 )

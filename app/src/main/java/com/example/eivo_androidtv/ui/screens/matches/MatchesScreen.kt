@@ -57,6 +57,8 @@ import com.example.eivo_androidtv.ui.components.FilterButton
 import com.example.eivo_androidtv.ui.components.NoContentState
 import kotlinx.coroutines.launch
 
+private val SpanishLocale = Locale.forLanguageTag("es-ES")
+
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MatchesScreen(
@@ -65,7 +67,7 @@ fun MatchesScreen(
     onRegionSelected: (ComunidadDto) -> Unit,
     filterClubId: String? = null,
     onNavigateToClubSelection: () -> Unit,
-    onNavigateToPlayer: (String) -> Unit,
+    onNavigateToPlayer: (String, String?) -> Unit,
     onClearClubFilter: () -> Unit,
     onNavigateToProfile: () -> Unit,
     apiService: EivoApiService,
@@ -200,7 +202,7 @@ fun MatchesScreen(
                             items(matches) { match ->
                                 MatchCard(
                                     match = match,
-                                    onClick = { onNavigateToPlayer(match.id.toString()) }
+                                    onClick = { onNavigateToPlayer(match.id.toString(), match.img_back) }
                                 )
                             }
                         }
@@ -274,7 +276,7 @@ fun FilterSecondaryBar(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
                     IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
                     Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale.getDefault()).uppercase(), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                     IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
                 }
@@ -296,8 +298,8 @@ fun DateLabel(date: LocalDate, isSelected: Boolean) {
 
     val dayName = when {
         date.isEqual(today) -> stringResource(R.string.matches_today)
-        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-            .uppercase().replace(".", "")
+        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, SpanishLocale)
+            .uppercase(SpanishLocale).replace(".", "")
     }
 
     val label = "$dayName ${date.dayOfMonth}"

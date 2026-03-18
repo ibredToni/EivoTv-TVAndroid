@@ -39,6 +39,7 @@ import com.example.eivo_androidtv.utils.NetworkModule
 @Composable
 fun PlayerScreen(
     eventId: String,
+    backgroundImage: String?,
     apiService: EivoApiService,
     onBack: () -> Unit
 ) {
@@ -78,6 +79,7 @@ fun PlayerScreen(
                 if (isPaused) {
                     PauseScreen(
                         detalle = state.detalle,
+                        backgroundImage = backgroundImage,
                         onResume = { isPaused = false },
                         ads = ads
                     )
