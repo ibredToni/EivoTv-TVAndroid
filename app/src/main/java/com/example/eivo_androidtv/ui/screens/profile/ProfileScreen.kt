@@ -179,7 +179,6 @@ fun StatsSection(
         Spacer(modifier = Modifier.height(16.dp))
         StatRow(stringResource(R.string.profile_stat_matchdays), jornadas.toString())
         StatRow(stringResource(R.string.profile_stat_summaries), eventos.toString())
-        StatRow(stringResource(R.string.profile_stat_highlights), "Mock")
     }
 }
 
