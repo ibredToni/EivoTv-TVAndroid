@@ -331,7 +331,7 @@ fun IconButtonArrow(iconRes: Int, onClick: () -> Unit) {
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         shape = ClickableSurfaceDefaults.shape(RectangleShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color(0xFFC0C0C0),
+            containerColor = Color(0xFF424242),
             focusedContainerColor = Color.White
         )
     ) {
