@@ -61,7 +61,7 @@ fun HomeScreen(
     onSportSelected: (String) -> Unit,
     onNavigateToMatches: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToPlayer: (String) -> Unit,
+    onNavigateToPlayer: (String, String?) -> Unit,
     regions: List<ComunidadDto>,
     sessionManager: SessionManager,
     isInitialLoading: Boolean,
@@ -169,9 +169,12 @@ fun HomeScreen(
                                 pagerState = pagerState,
                                 modifier = Modifier.weight(0.72f),
                                 onBannerClick = {
+                                    val currentDestacado = destacados[pagerState.currentPage]
                                     val currentEventId =
                                         destacados[pagerState.currentPage].id.toString()
-                                    onNavigateToPlayer(currentEventId)
+                                    val currentImg = currentDestacado.img
+                                    onNavigateToPlayer(currentEventId, currentImg)
+
                                 },
                                 onMoveDown = { sportsChipFocusRequester.requestFocus() },
                                 onMoveUp = { topBarFocusRequester.requestFocus() },
@@ -187,7 +190,8 @@ fun HomeScreen(
                                 modifier = Modifier.weight(0.28f),
                                 token = token,
                                 onNextClick = { eventId ->
-                                    onNavigateToPlayer(eventId)
+                                    val destacado = destacados.find { it.id.toString() == eventId }
+                                    onNavigateToPlayer(eventId, destacado?.img)
                                 }
                             )
                         } else if (!isLoading) {

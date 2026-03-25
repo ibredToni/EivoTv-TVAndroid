@@ -183,8 +183,8 @@ fun AppNavigation() {
                     onNavigateToProfile = {
                         navController.navigate(Screen.Profile.route)
                     },
-                    onNavigateToPlayer = { eventId ->
-                        navController.navigate(Screen.Player.createRoute(eventId))
+                    onNavigateToPlayer = { eventId, bgUrl ->
+                        navController.navigate(Screen.Player.createRoute(eventId, bgUrl))
                     },
                 )
             }
