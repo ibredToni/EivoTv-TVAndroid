@@ -45,8 +45,8 @@ fun SelectableChip(
             modifier = Modifier
                 .padding(4.dp)
                 .clip(CircleShape)
-                .background(if (isSelected) Color(0xFFC0C0C0) else Color.White.copy(alpha = 0.1f))
-                .padding(horizontal = 20.dp, vertical = 2.dp),
+                .background(if (isSelected) Color(0xFF505A73) else Color(0xFF202636))
+                .padding(horizontal = 20.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -54,7 +54,7 @@ fun SelectableChip(
                 style = androidx.compose.ui.text.TextStyle(
                     fontSize = 14.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) Color.Black else Color.White
+                    color = Color.White
                 )
             )
         }

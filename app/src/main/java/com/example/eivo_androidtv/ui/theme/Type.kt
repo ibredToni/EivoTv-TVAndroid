@@ -4,40 +4,104 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Typography
 import com.example.eivo_androidtv.R
 
-// 1. Definimos la nueva familia Saira Condensed
-val SairaCondensedFontFamily = FontFamily(
+// --- Familias de Fuentes ---
+
+val Saira = FontFamily(
+    Font(R.font.saira_regular, FontWeight.Normal),
+    Font(R.font.saira_bold, FontWeight.Bold)
+)
+
+val SairaCondensed = FontFamily(
+    Font(R.font.sairacondensed_regular, FontWeight.Normal),
+    Font(R.font.sairacondensed_semibold, FontWeight.SemiBold),
+)
+
+val SairaSemiCondensed = FontFamily(
+    Font(R.font.sairasemicondensed_regular, FontWeight.Normal),
+    Font(R.font.sairasemicondensed_semibold, FontWeight.SemiBold),
+    Font(R.font.sairasemicondensed_bold, FontWeight.Bold)
+)
+
+val SairaExtraCondensed = FontFamily(
     Font(R.font.sairaextracondensed_regular, FontWeight.Normal),
-    //Font(R.font.sairasemicondensed_semibold, FontWeight.SemiBold),
     Font(R.font.sairaextracondensed_bold, FontWeight.Bold)
 )
 
+// --- Sistema de Tipografía ---
+
 @OptIn(ExperimentalTvMaterial3Api::class)
 val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = SairaCondensedFontFamily, // Cambiado aquí
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = SairaCondensedFontFamily, // Cambiado aquí
+    // Títulos Gigantes (Pause Screen)
+    displayMedium = TextStyle(
+        fontFamily = SairaExtraCondensed,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        fontSize = 35.sp,
+        lineHeight = 40.sp
     ),
-    // Puedes usar SemiBold en algún estilo específico si quieres probarlo
+    // Títulos de Cards (MatchCard)
+    headlineSmall = TextStyle(
+        fontFamily = SairaExtraCondensed,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 18.sp
+    ),
+    // Textos
+    headlineMedium = TextStyle(
+        fontFamily = SairaExtraCondensed,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 18.sp
+    ),
+    // Botones de Filtro
+    titleSmall = TextStyle(
+        fontFamily = SairaSemiCondensed,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        textAlign = TextAlign.Center
+    ),
+    // Cuerpo de texto Destacado/Bold (Descripción MatchCard)
+    bodyMedium = TextStyle(
+        fontFamily = SairaSemiCondensed,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp
+    ),
+    // Cuerpo de texto
+    bodyLarge = TextStyle(
+        fontFamily = SairaSemiCondensed,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp
+    ),
+    // Cuerpo de texto Normal (Fecha/Hora, Descripciones secundarias)
+    bodySmall = TextStyle(
+        fontFamily = SairaSemiCondensed,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp
+    ),
+    // Etiquetas de Publicidad (AD)
+    labelLarge = TextStyle(
+        fontFamily = Saira,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 16.sp
+    ),
+    // Textos mínimos (Botón "Seguir viendo")
     labelSmall = TextStyle(
-        fontFamily = SairaCondensedFontFamily,
-        fontWeight = FontWeight.SemiBold, // Probando el SemiBold aquí
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontFamily = Saira,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        lineHeight = 10.sp
+    ),
+    // Textos medios
+    labelMedium = TextStyle(
+        fontFamily = Saira,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
     )
+
 )

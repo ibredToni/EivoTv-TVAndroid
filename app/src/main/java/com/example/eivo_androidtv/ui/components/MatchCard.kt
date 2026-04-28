@@ -1,28 +1,25 @@
 package com.example.eivo_androidtv.ui.components
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
-import com.example.eivo_androidtv.R
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.onFocusChanged
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.utils.formatToTime
 
@@ -63,8 +60,9 @@ fun MatchCard(
                     .fillMaxWidth()
                     .aspectRatio(if (isFocused) 1.1f else 1.6f)
             ) {
+                // Fondo de la Card
                 AsyncImage(
-                    model = ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                    model = ImageRequest.Builder(LocalContext.current)
                         .data(match.img_back)
                         .fallback(R.drawable.back_error)
                         .error(R.drawable.back_error)
@@ -73,9 +71,10 @@ fun MatchCard(
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
-                    alpha = if (isFocused) 0.5f else 1f
+                    alpha = if (isFocused) 0.2f else 1f
                 )
 
+                // Contenedor de logos centrales
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -84,9 +83,7 @@ fun MatchCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         contentAlignment = Alignment.CenterEnd
                     ) {
                         AsyncImage(
@@ -94,15 +91,15 @@ fun MatchCard(
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize().scale(1.8f),
                             contentScale = ContentScale.Fit,
-                            alpha = if (isFocused) 0.7f else 1f
+                            // AJUSTADO: alpha igual que el fondo (0.2f)
+                            alpha = if (isFocused) 0.2f else 1f
                         )
                     }
 
                     Spacer(modifier = Modifier.width(30.dp))
+
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         AsyncImage(
@@ -110,29 +107,13 @@ fun MatchCard(
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize().scale(1.8f),
                             contentScale = ContentScale.Fit,
-                            alpha = if (isFocused) 0.7f else 1f
+                            // AJUSTADO: alpha igual que el fondo (0.2f)
+                            alpha = if (isFocused) 0.2f else 1f
                         )
                     }
-
-
                 }
-                //TODO Directos
-                /*if (match.isDirecto && !isFocused) {
-                    Box(
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .background(Color.Red, RectangleShape)
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "DIRECTO",
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }*/
 
+                // Información SUPERPUESTA
                 if (isFocused) {
                     Column(
                         modifier = Modifier
@@ -142,28 +123,26 @@ fun MatchCard(
                         Text(
                             text = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}",
                             color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 18.sp
+                            style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = match.descripcion,
                             color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                             maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = formatToTime(match.inicio),
                             color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 11.sp
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp)
                         )
                     }
                 }
             }
 
+            // Información INFERIOR
             if (!isFocused) {
                 Column(
                     modifier = Modifier
@@ -173,15 +152,14 @@ fun MatchCard(
                     Text(
                         text = match.descripcion,
                         color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = formatToTime(match.inicio),
                         color = Color.White,
-                        fontSize = 12.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }

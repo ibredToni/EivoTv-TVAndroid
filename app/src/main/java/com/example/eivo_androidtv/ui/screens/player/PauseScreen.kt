@@ -1,5 +1,6 @@
 package com.example.eivo_androidtv.ui.screens.player
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,19 +16,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
 import coil.compose.AsyncImage
 import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
-import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -37,24 +35,27 @@ fun PauseScreen(
     backgroundImage: String?,
     ads: List<AdDto>
 ) {
-
     BackHandler {
         onResume()
     }
 
     val pauseAd = ads.find { it.position == "pause" }
-
     val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
-
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val screenWidthPx = with(androidx.compose.ui.platform.LocalDensity.current) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+
+    val screenWidthPx = with(density) {
         configuration.screenWidthDp.dp.toPx()
     }
 
-    val gradientEndEdge = screenWidthPx * 0.5f
+    val gradientEndEdge = screenWidthPx * .6f
+
+    val formattedName = remember(detalle.nombre) {
+        detalle.nombre?.replace(Regex("\\s*-\\s*"), "\n")?.uppercase() ?: ""
+    }
 
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(100)
+        delay(100)
         focusRequester.requestFocus()
     }
 
@@ -63,16 +64,16 @@ fun PauseScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
+        // 1. Imagen de Publicidad (Background)
+        AsyncImage(
+            model = pauseAd?.url,
+            contentDescription = "Publicidad",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            error = null
+        )
 
-                AsyncImage(
-                    model = pauseAd?.url,
-                    contentDescription = "Publicidad",
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                    error = null
-                )
-
+        // 2. Gradiente de fondo para legibilidad
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,7 +81,7 @@ fun PauseScreen(
                     Brush.horizontalGradient(
                         colors = listOf(
                             Color(0xFF070A0D),
-                            Color(0xFF070A0D).copy(alpha = 0.8f),
+                            Color.Black,
                             Color.Transparent
                         ),
                         startX = 0f,
@@ -91,17 +92,19 @@ fun PauseScreen(
 
         BackgroundFoci(MaterialTheme.colorScheme.primary)
 
+        // 3. Contenedor Lateral Izquierdo (Info del evento)
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(0.28f)
-                .padding(start = 50.dp, top = 40.dp, bottom = 40.dp)
+                .fillMaxWidth(0.30f)
+                .padding(start = 20.dp, top = 40.dp, bottom = 40.dp)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .border(1.dp, Color.White.copy(alpha = 0.5f), RectangleShape)
             ) {
+                // Imagen de fondo del recuadro
                 if (!backgroundImage.isNullOrBlank()) {
                     AsyncImage(
                         model = backgroundImage,
@@ -127,63 +130,51 @@ fun PauseScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Bottom
                 ) {
+                    // Logos de los equipos
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         AsyncImage(
-                            model = coil.request.ImageRequest.Builder(LocalContext.current)
-                                .data(detalle.img_loc)
-                                .crossfade(true)
-                                .listener(
-                                    onError = { _, result ->
-                                        //android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
-                                    }
-                                )
-                                .build(),
+                            model = detalle.img_loc,
                             contentDescription = null,
-                            modifier = Modifier.size(60.dp),
-                            contentScale = ContentScale.Fit,
-                            error = null
+                            modifier = Modifier.size(100.dp),
+                            contentScale = ContentScale.Fit
                         )
                         Spacer(Modifier.width(8.dp))
                         AsyncImage(
-                            model = coil.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
-                                .data(detalle.img_vis)
-                                .crossfade(true)
-                                .listener(
-                                    onError = { _, result ->
-                                        //android.util.Log.e("COIL_ERROR", "Error Loc: ${result.throwable.message}")
-                                    }
-                                )
-                                .build(),
+                            model = detalle.img_vis,
                             contentDescription = null,
-                            modifier = Modifier.size(60.dp),
-                            contentScale = ContentScale.Fit,
-                            error = null
+                            modifier = Modifier.size(100.dp),
+                            contentScale = ContentScale.Fit
                         )
                     }
 
                     Spacer(Modifier.height(10.dp))
 
+                    // Nombre del Evento
                     Text(
-                        text = detalle.nombre?.uppercase() ?: stringResource(R.string.player_no_name),
+                        text = formattedName.uppercase(),
                         color = Color.White,
-                        fontSize = 18.sp,
-                        lineHeight = 22.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        style = MaterialTheme.typography.displayMedium
                     )
 
                     Spacer(Modifier.height(4.dp))
 
+                    // Descripción
                     Text(
                         text = detalle.descripcion ?: "",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 10.sp)
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    // Horario
                     Text(
                         text = detalle.inicio ?: "",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 9.sp)
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // Botón Continuar
                     Button(
                         onClick = onResume,
                         shape = ButtonDefaults.shape(RectangleShape),
@@ -192,22 +183,24 @@ fun PauseScreen(
                             contentColor = Color.Black
                         ),
                         modifier = Modifier
-                            .height(22.dp)
+                            .height(20.dp)
                             .wrapContentWidth()
                             .focusRequester(focusRequester),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_play),
                                 contentDescription = null,
-                                modifier = Modifier.size(8.dp)
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(Modifier.width(4.dp))
+                            Spacer(Modifier.width(2.dp))
                             Text(
-                                stringResource(R.string.player_keep_watching),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold
+                                text = stringResource(R.string.player_keep_watching),
+                                style = MaterialTheme.typography.labelSmall
                             )
                         }
                     }
@@ -215,6 +208,7 @@ fun PauseScreen(
             }
         }
 
+        // 4. Etiqueta de Publicidad
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -230,8 +224,7 @@ fun PauseScreen(
             Text(
                 text = stringResource(R.string.ad_label),
                 color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.ExtraBold
+                style = MaterialTheme.typography.labelLarge
             )
         }
     }

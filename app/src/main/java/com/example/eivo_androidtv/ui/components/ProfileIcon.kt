@@ -34,22 +34,20 @@ fun ProfileIcon(onNavigateToProfile: () -> Unit) {
             .size(36.dp)
             .onFocusChanged { isFocused = it.isFocused },
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (isFocused) Color.White else Color.Transparent,
+            containerColor = Color.Transparent,
             focusedContainerColor = Color.White
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f)
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.1f)
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .border(1.dp, if (isFocused) Color.White else Color.White, CircleShape),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.user),
                 contentDescription = null,
                 tint = if (isFocused) Color.Black else Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(26.dp)
             )
         }
     }

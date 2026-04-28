@@ -30,7 +30,7 @@ fun ChipGroup(
             modifier = Modifier
                 .wrapContentWidth()
                 .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items(items) { item ->

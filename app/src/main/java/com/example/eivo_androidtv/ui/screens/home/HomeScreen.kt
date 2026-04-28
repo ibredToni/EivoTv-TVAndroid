@@ -22,7 +22,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
@@ -48,6 +47,8 @@ import com.example.eivo_androidtv.ui.components.ConfirmationDialog
 import com.example.eivo_androidtv.ui.components.EivoScreenContainer
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.NoContentState
+import com.example.eivo_androidtv.ui.components.RegionChipGroup
+import com.example.eivo_androidtv.utils.formatToLongDate
 import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -93,17 +94,8 @@ fun HomeScreen(
             val adsDeferred = apiService.fetchAdverts()
             val posicionesValidas = listOf("home_1", "home_2")
             adsHome = adsDeferred.filter { it.position in posicionesValidas }
-        } catch (e: java.net.UnknownHostException) {
-            isOffline = true
-            errorOccurred = true
-        } catch (e: java.net.ConnectException) {
-            isOffline = true
-            errorOccurred = true
-        } catch (e: java.io.IOException) {
-            isOffline = true
-            errorOccurred = true
         } catch (e: Exception) {
-            isOffline = false
+            isOffline = (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.io.IOException)
             errorOccurred = true
         } finally {
             isLoading = false
@@ -115,9 +107,8 @@ fun HomeScreen(
     }
 
     EivoScreenContainer {
-
         when {
-            isLoading|| isInitialLoading -> {
+            isLoading || isInitialLoading -> {
                 Box(Modifier.fillMaxSize().focusable().focusRequester(remember { FocusRequester() }), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
@@ -126,11 +117,7 @@ fun HomeScreen(
             errorOccurred -> {
                 ErrorStateComponent(
                     isOffline = isOffline,
-                    onRetry = {
-                        scope.launch {
-                            loadData()
-                        }
-                    }
+                    onRetry = { scope.launch { loadData() } }
                 )
             }
 
@@ -139,7 +126,6 @@ fun HomeScreen(
             }
 
             else -> {
-
                 LaunchedEffect(regions) {
                     if (regions.isNotEmpty()) {
                         kotlinx.coroutines.yield()
@@ -147,16 +133,13 @@ fun HomeScreen(
                     }
                 }
 
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)
-                ) {
+                Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
                     Box(modifier = Modifier.focusRequester(topBarFocusRequester)) {
                         HomeTopBar(
                             regions = regions,
                             selectedRegion = selectedRegion,
                             onRegionSelected = onRegionSelected,
-                            onNavigateToProfile = onNavigateToProfile,
-                            modifier = Modifier.focusRequester(topBarFocusRequester)
+                            onNavigateToProfile = onNavigateToProfile
                         )
                     }
 
@@ -167,27 +150,23 @@ fun HomeScreen(
                             HeroBanner(
                                 banners = destacados,
                                 pagerState = pagerState,
-                                modifier = Modifier.weight(0.72f),
+                                modifier = Modifier.weight(0.70f).fillMaxHeight(),
                                 onBannerClick = {
                                     val currentDestacado = destacados[pagerState.currentPage]
-                                    val currentEventId =
-                                        destacados[pagerState.currentPage].id.toString()
-                                    val currentImg = currentDestacado.img
-                                    onNavigateToPlayer(currentEventId, currentImg)
-
+                                    onNavigateToPlayer(currentDestacado.id.toString(), currentDestacado.img)
                                 },
                                 onMoveDown = { sportsChipFocusRequester.requestFocus() },
                                 onMoveUp = { topBarFocusRequester.requestFocus() },
                                 token = token
                             )
 
-                            Spacer(modifier = Modifier.width(20.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
 
                             RightSidebar(
                                 destacados = destacados,
                                 ads = adsHome,
                                 currentPagerIndex = pagerState.currentPage,
-                                modifier = Modifier.weight(0.28f),
+                                modifier = Modifier.weight(0.25f).fillMaxHeight(),
                                 token = token,
                                 onNextClick = { eventId ->
                                     val destacado = destacados.find { it.id.toString() == eventId }
@@ -195,10 +174,7 @@ fun HomeScreen(
                                 }
                             )
                         } else if (!isLoading) {
-                            Box(
-                                Modifier.fillMaxSize().weight(1f),
-                                contentAlignment = Alignment.Center
-                            ) {
+                            Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                                 Text(stringResource(R.string.no_featured_content), color = Color.Gray)
                             }
                         }
@@ -226,13 +202,10 @@ fun HomeScreen(
                 title = stringResource(R.string.confirmation_exit),
                 confirmText = stringResource(R.string.btn_exit),
                 dismissText = stringResource(R.string.btn_cancel),
-                onConfirm = {
-                    (context as? android.app.Activity)?.finish()
-                },
+                onConfirm = { (context as? android.app.Activity)?.finish() },
                 onDismiss = { showExitDialog = false }
             )
         }
-
     }
 }
 
@@ -246,7 +219,7 @@ fun HomeTopBar(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -257,13 +230,11 @@ fun HomeTopBar(
             contentScale = ContentScale.Fit
         )
 
-        ChipGroup(
-            items = regions.map { it.name },
-            selectedItem = selectedRegion?.name ?: "",
-            onItemSelected = { nombre ->
-                regions.find { it.name == nombre }?.let { onRegionSelected(it) }
-            },
-            modifier = Modifier.weight(1f).fillMaxWidth(0.5f)
+        RegionChipGroup(
+            regions = regions,
+            selectedRegion = selectedRegion,
+            onRegionSelected = onRegionSelected,
+            modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
         )
 
         ProfileIcon(onNavigateToProfile = onNavigateToProfile)
@@ -292,39 +263,27 @@ fun HeroBanner(
             var isPageFocused by remember { mutableStateOf(false) }
 
             Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(4.dp),
+                modifier = Modifier.fillMaxSize().padding(1.dp),
                 shape = RectangleShape,
                 border = Border(
                     border = BorderStroke(
-                        width = if (isPageFocused) 3.dp else 2.dp,
-                        color = if (isPageFocused) Color.White else Color.White.copy(alpha = 0.5f)
+                        width = if (isPageFocused) 3.dp else 0.dp,
+                        color = if (isPageFocused) Color.White else Color.Transparent
                     ),
                     shape = RectangleShape
                 ),
                 colors = SurfaceDefaults.colors(containerColor = Color.Black)
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    LaunchedEffect(data.img) {
-                        //android.util.Log.d("URL_CHECK", "Intentando cargar: ${data.img.trim()}")
-                    }
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(data.img.trim())
-
                             .crossfade(true)
                             .allowHardware(false)
                             .build(),
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black),
-                        contentScale = ContentScale.Crop,
-                        error = null,
-                        onError = { state ->
-                            //android.util.Log.e("EIVO_FAIL", "Error en imagen: ${state.result.throwable.message}")
-                        }
+                        modifier = Modifier.fillMaxSize().background(Color.Black),
+                        contentScale = ContentScale.Crop
                     )
 
                     Box(
@@ -344,24 +303,25 @@ fun HeroBanner(
                             .padding(32.dp)
                             .fillMaxWidth(0.7f)
                     ) {
+                        // Título Destacado
                         Text(
                             text = data.nombre.uppercase(),
                             color = Color.White,
-                            fontSize = 38.sp,
-                            lineHeight = 42.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 38.sp, lineHeight = 42.sp),
                             maxLines = 3,
                             overflow = Ellipsis
                         )
+                        // Descripción
                         Text(
                             text = data.descripcion,
-                            color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 18.sp
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
                         )
+                        // Fecha
                         Text(
-                            text = data.inicio,
-                            color = Color.White,//.copy(alpha = 0.8f),
-                            fontSize = 18.sp
+                            text = formatToLongDate(data.inicio),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -375,80 +335,70 @@ fun HeroBanner(
                                 .onKeyEvent { event ->
                                     if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                         when (event.nativeKeyEvent.keyCode) {
-                                            KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                                onMoveDown()
-                                                true
-                                            }
-                                            KeyEvent.KEYCODE_DPAD_UP -> {
-                                                onMoveUp()
-                                                true
-                                            }
+                                            KeyEvent.KEYCODE_DPAD_DOWN -> { onMoveDown(); true }
+                                            KeyEvent.KEYCODE_DPAD_UP -> { onMoveUp(); true }
                                             else -> false
                                         }
-                                    } else {
-                                        false
-                                    }
+                                    } else false
                                 },
                             shape = ButtonDefaults.shape(RectangleShape),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                             colors = ButtonDefaults.colors(
-                                containerColor = Color.White.copy(alpha = 0.2f),
-                                contentColor = Color.White,
+                                containerColor = Color.White,
+                                contentColor = Color.Black,
                                 focusedContainerColor = Color.White,
                                 focusedContentColor = Color.Black
                             ),
-                            scale = ButtonDefaults.scale(focusedScale = 1.1f)
+                            scale = ButtonDefaults.scale(focusedScale = 1.1f),
+                            contentPadding = PaddingValues(horizontal = 8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_play),
                                     contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
-                                Spacer(Modifier.width(8.dp))
-                                Text(stringResource(R.string.watch_now), fontWeight = FontWeight.Normal, fontSize = 12.sp)
+                                Spacer(Modifier.width(2.dp))
+                                Text(
+                                    text = stringResource(R.string.watch_now),
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp)
+                                )
                             }
                         }
 
-                        if (isPageFocused) {
-                            Spacer(Modifier.height(20.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                val totalDots = banners.size
-                                val maxVisibleDots = 5
+                        Spacer(Modifier.height(20.dp))
 
-                                val startDot = when {
-                                    totalDots <= maxVisibleDots -> 0
-                                    pagerState.currentPage < 3 -> 0
-                                    pagerState.currentPage > totalDots - 3 -> totalDots - maxVisibleDots
-                                    else -> pagerState.currentPage - 2
+                        // Paginador (Dots)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            val totalDots = banners.size
+                            val maxVisibleDots = 5
+                            val startDot = when {
+                                totalDots <= maxVisibleDots -> 0
+                                pagerState.currentPage < 3 -> 0
+                                pagerState.currentPage > totalDots - 3 -> totalDots - maxVisibleDots
+                                else -> pagerState.currentPage - 2
+                            }
+                            val endDot = (startDot + maxVisibleDots).coerceAtMost(totalDots)
+
+                            for (index in startDot until endDot) {
+                                val isSelected = pagerState.currentPage == index
+                                val isEdge = (index == startDot && startDot > 0) || (index == endDot - 1 && endDot < totalDots)
+                                val dotWidth = when {
+                                    isSelected -> 10.dp
+                                    isEdge -> 3.dp
+                                    else -> 4.dp
                                 }
-                                val endDot = (startDot + maxVisibleDots).coerceAtMost(totalDots)
-
-                                for (index in startDot until endDot) {
-                                    val isSelected = pagerState.currentPage == index
-
-                                    val isEdge = (index == startDot && startDot > 0) ||
-                                            (index == endDot - 1 && endDot < totalDots)
-
-                                    val dotWidth = when {
-                                        isSelected -> 10.dp
-                                        isEdge -> 3.dp
-                                        else -> 4.dp
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .height(if (isEdge && !isSelected) 3.dp else 4.dp)
-                                            .width(dotWidth)
-                                            .background(
-                                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
-                                                shape = CircleShape
-                                            )
-                                    )
-                                }
+                                Box(
+                                    modifier = Modifier
+                                        .height(if (isEdge && !isSelected) 3.dp else 4.dp)
+                                        .width(dotWidth)
+                                        .background(
+                                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
+                                            shape = CircleShape
+                                        )
+                                )
                             }
                         }
                     }
@@ -457,6 +407,7 @@ fun HeroBanner(
         }
     }
 }
+
 
 @Composable
 fun RightSidebar(
@@ -468,63 +419,44 @@ fun RightSidebar(
     onNextClick: (String) -> Unit
 ) {
     val context = LocalContext.current
-
     val gifImageLoader = remember {
         coil.ImageLoader.Builder(context)
             .components {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    add(ImageDecoderDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
+                if (Build.VERSION.SDK_INT >= 28) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
             }
             .build()
     }
 
     val nextDestacadoIndex = (currentPagerIndex + 1) % destacados.size
     val nextDestacado = destacados[nextDestacadoIndex]
-    val adHomeList = remember(ads) { ads.filter { it.position == "home_1" } }
-    val adHome2List = remember(ads) { ads.filter { it.position == "home_2" } }
+    val ad1ToShow = remember(ads) { ads.filter { it.position == "home_1" }.let { if (it.isNotEmpty()) it.random() else null } }
+    val ad2ToShow = remember(ads) { ads.filter { it.position == "home_2" }.let { if (it.isNotEmpty()) it.random() else null } }
 
-    val ad1ToShow = remember(adHomeList) {
-        if (adHomeList.isNotEmpty()) adHomeList.random() else null
-    }
-    val ad2ToShow = remember(adHome2List) {
-        if (adHome2List.isNotEmpty()) adHome2List.random() else null
-    }
+    Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SidebarItem(
+            imageUrl = nextDestacado.img,
+            modifier = Modifier.weight(1.2f),
+            token = token,
+            imageLoader = gifImageLoader,
+            isClickable = true,
+            onClick = { onNextClick(nextDestacado.id.toString()) }
+        )
 
-    Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Spacer(modifier = Modifier.height(8.dp))
 
-        if (nextDestacado != null) {
-            SidebarItem(
-                imageUrl = nextDestacado.img,
-                modifier = Modifier.weight(1f),
-                token = token,
-                imageLoader = gifImageLoader,
-                isClickable = true,
-                onClick = { onNextClick(nextDestacado.id.toString()) }
-            )
-        }
+        SidebarItem(
+            imageUrl = ad1ToShow?.url,
+            modifier = Modifier.weight(.9f).fillMaxSize(),
+            imageLoader = gifImageLoader,
+            isClickable = false
+        )
 
-        Box(modifier = Modifier.weight(1f)) {
-            SidebarItem(
-                imageUrl = ad1ToShow?.url,
-                modifier = Modifier.fillMaxSize(),
-                token = "",
-                imageLoader = gifImageLoader,
-                isClickable = false
-            )
-        }
-
-        Box(modifier = Modifier.weight(1f)) {
-            SidebarItem(
-                imageUrl = ad2ToShow?.url,
-                modifier = Modifier.fillMaxSize(),
-                token = "",
-                imageLoader = gifImageLoader,
-                isClickable = false
-            )
-        }
+        SidebarItem(
+            imageUrl = ad2ToShow?.url,
+            modifier = Modifier.weight(.9f).fillMaxSize(),
+            imageLoader = gifImageLoader,
+            isClickable = false
+        )
     }
 }
 
@@ -545,10 +477,7 @@ fun SidebarItem(
             modifier = modifier.fillMaxWidth(),
             scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
             shape = ClickableSurfaceDefaults.shape(RectangleShape),
-            colors = ClickableSurfaceDefaults.colors(
-                containerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent
-            ),
+            colors = ClickableSurfaceDefaults.colors(containerColor = Color.Transparent, focusedContainerColor = Color.Transparent),
             border = ClickableSurfaceDefaults.border(
                 focusedBorder = Border(
                     border = BorderStroke(3.dp, Color.White),
@@ -570,17 +499,12 @@ fun SidebarImageContent(imageUrl: String?, imageRes: Int?, token: String, imageL
     AsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(imageUrl ?: imageRes)
-            .apply {
-                if (token.isNotEmpty()) addHeader("Authorization", "Bearer $token")
-            }
+            .apply { if (token.isNotEmpty()) addHeader("Authorization", "Bearer $token") }
             .crossfade(true)
             .build(),
         imageLoader = imageLoader,
         contentDescription = null,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentScale = ContentScale.Crop,
-        error = null
+        modifier = Modifier.fillMaxSize().background(Color.Black),
+        contentScale = ContentScale.Crop
     )
 }

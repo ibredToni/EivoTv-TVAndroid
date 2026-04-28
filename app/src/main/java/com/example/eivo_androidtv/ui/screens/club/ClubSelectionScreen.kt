@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,7 +37,6 @@ import com.example.eivo_androidtv.ui.components.ChipGroup
 import com.example.eivo_androidtv.ui.components.ErrorStateComponent
 import com.example.eivo_androidtv.ui.components.NoContentState
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -65,17 +63,8 @@ fun ClubSelectionScreen(
             isOffline = false
             try {
                 clubs = apiService.fetchClubs(selectedRegion.id.toString(), selectedSportId)
-            } catch (e: java.net.UnknownHostException) {
-                isOffline = true
-                errorOccurred = true
-            } catch (e: java.net.ConnectException) {
-                isOffline = true
-                errorOccurred = true
-            } catch (e: java.io.IOException) {
-                isOffline = true
-                errorOccurred = true
             } catch (e: Exception) {
-                isOffline = false
+                isOffline = (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.io.IOException)
                 errorOccurred = true
             } finally {
                 isLoading = false
@@ -92,7 +81,6 @@ fun ClubSelectionScreen(
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         BackgroundFoci(MaterialTheme.colorScheme.primary)
 
-        // Lógica de Estados
         when {
             isLoading -> {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -103,9 +91,7 @@ fun ClubSelectionScreen(
             errorOccurred -> {
                 ErrorStateComponent(
                     isOffline = isOffline,
-                    onRetry = {
-                        scope.launch { loadClubs() }
-                    }
+                    onRetry = { scope.launch { loadClubs() } }
                 )
             }
 
@@ -118,6 +104,7 @@ fun ClubSelectionScreen(
 
             else -> {
                 Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
+                    // Header
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -135,6 +122,7 @@ fun ClubSelectionScreen(
                         ProfileIcon(onNavigateToProfile = onNavigateToProfile)
                     }
 
+                    // Botón Volver
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         var isBackFocused by remember { mutableStateOf(false) }
                         Box(
@@ -152,15 +140,15 @@ fun ClubSelectionScreen(
                                 scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
                                 shape = ClickableSurfaceDefaults.shape(RectangleShape),
                                 colors = ClickableSurfaceDefaults.colors(
-                                    containerColor = Color(0xFFC0C0C0),
-                                    focusedContainerColor = Color(0xFFC0C0C0)
+                                    containerColor = Color(0xFF202636),
+                                    focusedContainerColor = Color(0xFF202636)
                                 )
                             ) {
                                 Text(
                                     text = stringResource(R.string.back_without_club),
-                                    color = Color.Black,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp)
                                 )
                             }
                         }
@@ -188,7 +176,6 @@ fun ClubSelectionScreen(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -206,7 +193,7 @@ private fun ClubSelectionItem(
         modifier = Modifier
             .width(140.dp)
             .zIndex(if (isFocused) 1f else 0f),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
         Surface(
             onClick = onClick,
@@ -239,9 +226,7 @@ private fun ClubSelectionItem(
                         .build(),
                     contentDescription = name,
                     onError = {
-                        if (urlToLoad != fallbackUrl) {
-                            urlToLoad = fallbackUrl
-                        }
+                        if (urlToLoad != fallbackUrl) urlToLoad = fallbackUrl
                     },
                     placeholder = ColorPainter(Color.Black),
                     contentScale = ContentScale.Fit,
@@ -255,12 +240,11 @@ private fun ClubSelectionItem(
         Text(
             text = name.uppercase(),
             color = Color.White,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.titleSmall.copy(fontSize = 12.sp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
         )
     }
 }

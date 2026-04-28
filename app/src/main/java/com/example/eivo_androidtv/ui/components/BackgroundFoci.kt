@@ -1,68 +1,48 @@
 package com.example.eivo_androidtv.ui.components
 
-import android.graphics.BlurMaskFilter
-import android.graphics.LinearGradient
-import android.graphics.Shader
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 
 @Composable
 fun BackgroundFoci(eivoColor: Color) {
-    Canvas(modifier = Modifier
-        .fillMaxSize()
-        .graphicsLayer(renderEffect = null)
-    ) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
-        val dynamicBlur = w * 0.0625f
 
-        drawIntoCanvas { canvas ->
-            val paint = Paint().asFrameworkPaint().apply {
-                isAntiAlias = true
-                if (dynamicBlur > 0f) {
-                    maskFilter = BlurMaskFilter(dynamicBlur, BlurMaskFilter.Blur.NORMAL)
-                }
-            }
+        // Ancho intermedio: 12% de la pantalla
+        val lineWeight = w * 0.12f
 
-            val pathIzquierdo = android.graphics.Path().apply {
-                moveTo(0f, 0f)
-                lineTo(w * 0.055f, 0f)
-                lineTo(w * 0.01f, h * 0.995f)
-                lineTo(0f, h * 0.995f)
-                close()
-            }
+        // --- LÍNEA DEGRADADA IZQUIERDA ---
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                // Usamos 0.0f, 0.5f y 1.0f implícitamente para controlar la caída
+                colors = listOf(
+                    eivoColor.copy(alpha = 0.8f), // Más sólido en el extremo
+                    eivoColor.copy(alpha = 0.2f),
+                    Color.Transparent
+                ),
+                startX = 0f,
+                endX = lineWeight
+            ),
+            size = androidx.compose.ui.geometry.Size(lineWeight, h)
+        )
 
-            paint.shader = LinearGradient(
-                0f, 0f, 0f, h * 0.98f,
-                eivoColor.copy(alpha = 0.9f).toArgb(),
-                android.graphics.Color.TRANSPARENT,
-                Shader.TileMode.CLAMP
-            )
-            canvas.nativeCanvas.drawPath(pathIzquierdo, paint)
-
-            val pathDerecho = android.graphics.Path().apply {
-                moveTo(w, h * 0.02f)
-                lineTo(w, h)
-                lineTo(w * 0.975f, h)
-                lineTo(w * 0.99f, h * 0.02f)
-                close()
-            }
-
-            paint.shader = LinearGradient(
-                w, h, w, h * 0.05f,
-                eivoColor.copy(alpha = 0.85f).toArgb(),
-                android.graphics.Color.TRANSPARENT,
-                Shader.TileMode.CLAMP
-            )
-            canvas.nativeCanvas.drawPath(pathDerecho, paint)
-        }
+        // --- LÍNEA DEGRADADA DERECHA ---
+        drawRect(
+            brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    eivoColor.copy(alpha = 0.2f),
+                    eivoColor.copy(alpha = 0.8f)
+                ),
+                startX = w - lineWeight,
+                endX = w
+            ),
+            topLeft = androidx.compose.ui.geometry.Offset(w - lineWeight, 0f),
+            size = androidx.compose.ui.geometry.Size(lineWeight, h)
+        )
     }
 }

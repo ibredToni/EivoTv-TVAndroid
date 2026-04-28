@@ -3,23 +3,11 @@ package com.example.eivo_androidtv.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -27,17 +15,13 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Text
-import com.example.eivo_androidtv.R
 import androidx.compose.ui.window.DialogProperties
-import androidx.tv.material3.ClickableSurfaceDefaults
-import androidx.tv.material3.Surface
+import androidx.tv.material3.*
+import com.example.eivo_androidtv.R
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -48,7 +32,7 @@ fun ConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+    val focusRequester = remember { FocusRequester() }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -81,9 +65,10 @@ fun ConfirmationDialog(
                 Text(
                     text = title,
                     color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = 22.sp,
+                        textAlign = TextAlign.Center
+                    ),
                     modifier = Modifier.padding(horizontal = 48.dp)
                 )
 
@@ -100,7 +85,6 @@ fun ConfirmationDialog(
                 }
             }
         }
-
     }
 
     LaunchedEffect(Unit) {
@@ -131,10 +115,11 @@ fun DialogButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
             Text(
                 text = text,
                 color = if (isFocused) Color.Black else Color.White,
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 2.dp),
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center
+                ),
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 2.dp)
             )
         }
     }

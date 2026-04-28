@@ -3,59 +3,37 @@ package com.example.eivo_androidtv.ui.screens.matches
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.tv.material3.ClickableSurfaceDefaults
-import androidx.tv.material3.Icon
-import androidx.tv.material3.Surface
-import androidx.tv.material3.Text
-import com.example.eivo_androidtv.R
-import com.example.eivo_androidtv.ui.components.ChipGroup
-import com.example.eivo_androidtv.ui.components.MatchCard
-import com.example.eivo_androidtv.ui.components.ProfileIcon
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.tv.material3.*
+import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.remote.EivoApiService
 import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
-import com.example.eivo_androidtv.ui.components.EivoScreenContainer
-import com.example.eivo_androidtv.ui.components.ErrorStateComponent
-import com.example.eivo_androidtv.ui.components.FilterButton
-import com.example.eivo_androidtv.ui.components.NoContentState
+import com.example.eivo_androidtv.ui.components.*
+import com.example.eivo_androidtv.utils.formatToTime
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+import androidx.compose.foundation.BorderStroke
 
 private val SpanishLocale = Locale.forLanguageTag("es-ES")
 
@@ -98,17 +76,8 @@ fun MatchesScreen(
                 } else {
                     apiService.fetchEventos(communityId, currentSportId, selectedDate.toString(), filterClubId)
                 }
-            } catch (e: java.net.UnknownHostException) {
-                isOffline = true
-                errorOccurred = true
-            } catch (e: java.net.ConnectException) {
-                isOffline = true
-                errorOccurred = true
-            } catch (e: java.io.IOException) {
-                isOffline = true
-                errorOccurred = true
             } catch (e: Exception) {
-                isOffline = false
+                isOffline = (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.io.IOException)
                 errorOccurred = true
             } finally {
                 isLoading = false
@@ -123,7 +92,6 @@ fun MatchesScreen(
     val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
 
     EivoScreenContainer {
-
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
 
             Row(
@@ -131,7 +99,11 @@ fun MatchesScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Image(painterResource(id = R.drawable.ic_eivo_logo), null, Modifier.width(80.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.ic_eivo_logo),
+                    contentDescription = null,
+                    modifier = Modifier.width(80.dp)
+                )
 
                 ChipGroup(
                     items = sports.map { it.nombre },
@@ -184,7 +156,6 @@ fun MatchesScreen(
                                 R.string.no_matches_live,
                                 selectedRegion?.name ?: "",
                                 currentSportName
-
                             )
                             filterClubId != null -> stringResource(R.string.no_matches_club)
                             else -> stringResource(R.string.no_matches_available)
@@ -227,35 +198,44 @@ fun FilterSecondaryBar(
     val hasClubFilter = filterClub != null
     var isDateGroupFocused by remember { mutableStateOf(false) }
     var isMonthGroupFocused by remember { mutableStateOf(false) }
+    val barHeight = 42.dp
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().height(barHeight),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // BOTÓN IZQUIERDA
         FilterButton(
             text = if (onlyDirectos) stringResource(R.string.matches_exit_live) else stringResource(R.string.matches_view_live),
             isActive = onlyDirectos,
             showLiveDot = !onlyDirectos,
-            onClick = onToggleDirectos
+            onClick = onToggleDirectos,
+            modifier = Modifier.fillMaxHeight()
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxHeight()
         ) {
+            // GRUPO DE DÍAS: Replicamos estructura de FilterButton (Box -> Border -> Padding 4dp)
             Box(
                 modifier = Modifier
-                    .onFocusChanged { isDateGroupFocused = it.hasFocus }
+                    .fillMaxHeight()
+                    .onFocusChanged { isDateGroupFocused = it.isFocused }
                     .border(
                         width = 2.dp,
                         color = if (isDateGroupFocused) Color.White else Color.Transparent,
                         shape = RectangleShape
                     )
-                    .padding(5.dp)
+                    .padding(4.dp) // <--- ESTO es lo que iguala la altura con el FilterButton
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxHeight().background(Color(0xFF151920))
+                ) {
                     IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
                     DateLabel(date = selectedDate.minusDays(1), isSelected = false)
                     DateLabel(date = selectedDate, isSelected = true)
@@ -263,20 +243,37 @@ fun FilterSecondaryBar(
                     IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
                 }
             }
+
+            // GRUPO DE MES: Replicamos estructura
             Box(
                 modifier = Modifier
-                    .onFocusChanged { isMonthGroupFocused = it.hasFocus }
+                    .fillMaxHeight()
+                    .onFocusChanged { isMonthGroupFocused = it.isFocused }
                     .border(
                         width = 2.dp,
                         color = if (isMonthGroupFocused) Color.White else Color.Transparent,
                         shape = RectangleShape
                     )
-                    .padding(5.dp)
+                    .padding(4.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(Color(0xFF151920))) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxHeight().background(Color(0xFF151920))
+                ) {
                     IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
-                    Box(modifier = Modifier.width(110.dp).background(Color(0xFF2A2F37)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        Text(text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Box(
+                        modifier = Modifier
+                            .width(110.dp)
+                            .background(Color(0xFF2A2F37))
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale),
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
+                            maxLines = 1
+                        )
                     }
                     IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
                 }
@@ -285,37 +282,36 @@ fun FilterSecondaryBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        // BOTÓN DERECHA
         FilterButton(
             text = if (hasClubFilter) stringResource(R.string.matches_view_all_clubs) else stringResource(R.string.matches_choose_club),
             isActive = hasClubFilter,
-            onClick = { if (hasClubFilter) onClearClubFilter() else onNavigateToClubSelection() }
+            onClick = { if (hasClubFilter) onClearClubFilter() else onNavigateToClubSelection() },
+            modifier = Modifier.fillMaxHeight()
         )
     }
 }
+
 @Composable
 fun DateLabel(date: LocalDate, isSelected: Boolean) {
     val today = LocalDate.now()
-
-    val dayName = when {
-        date.isEqual(today) -> stringResource(R.string.matches_today)
-        else -> date.dayOfWeek.getDisplayName(TextStyle.SHORT, SpanishLocale)
-            .uppercase(SpanishLocale).replace(".", "")
-    }
-
-    val label = "$dayName ${date.dayOfMonth}"
+    val dayName = if (date.isEqual(today)) stringResource(R.string.matches_today)
+    else date.dayOfWeek.getDisplayName(TextStyle.SHORT, SpanishLocale).uppercase(SpanishLocale).replace(".", "")
 
     Box(
         modifier = Modifier
             .width(75.dp)
             .background(color = if (isSelected) Color(0xFF2A2F37) else Color.Transparent)
-            .padding(vertical = 6.dp),
+            .fillMaxHeight(),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = label,
+            text = "$dayName ${date.dayOfMonth}",
             color = if (isSelected) Color.White else Color.Gray,
-            fontSize = 13.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontSize = 17.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            ),
             maxLines = 1
         )
     }
@@ -324,10 +320,9 @@ fun DateLabel(date: LocalDate, isSelected: Boolean) {
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun IconButtonArrow(iconRes: Int, onClick: () -> Unit) {
-    var isFocused by remember { mutableStateOf(false) }
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(32.dp),
+        modifier = Modifier.fillMaxHeight().aspectRatio(1f),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         shape = ClickableSurfaceDefaults.shape(RectangleShape),
         colors = ClickableSurfaceDefaults.colors(
@@ -335,14 +330,11 @@ fun IconButtonArrow(iconRes: Int, onClick: () -> Unit) {
             focusedContainerColor = Color.White
         )
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize().onFocusChanged { isFocused = it.isFocused },
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                modifier = Modifier.size(12.dp),
+                modifier = Modifier.requiredSize(40.dp),
                 tint = Color.Black
             )
         }

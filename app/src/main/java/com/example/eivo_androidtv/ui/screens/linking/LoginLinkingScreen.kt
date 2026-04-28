@@ -2,15 +2,12 @@ package com.example.eivo_androidtv.ui.screens.linking
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -21,7 +18,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import com.example.eivo_androidtv.R
-import com.example.eivo_androidtv.ui.components.BackgroundFoci
 import com.example.eivo_androidtv.ui.components.QrImage
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -38,9 +34,6 @@ fun LoginLinkingScreen(
     val state = viewModel.uiState
     val colorScheme = MaterialTheme.colorScheme
     val eivoColor = colorScheme.primary
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val screenWidthPx = configuration.screenWidthDp.toFloat() * androidx.compose.ui.platform.LocalDensity.current.density
-    val dynamicRadius = screenWidthPx * 1.2f
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -91,14 +84,14 @@ fun LoginLinkingScreen(
 
                 state.uuid != null -> {
                     val textStyle = androidx.compose.ui.text.TextStyle(
-                        color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                        color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, lineHeight = 28.sp
                     )
 
                     Text(text = stringResource(R.string.linking_qr_instruction), style = textStyle)
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Box(
-                        modifier = Modifier.size(160.dp).background(Color.White, shape = RoundedCornerShape(4.dp)),
+                        modifier = Modifier.size(110.dp).background(Color.White, shape = RoundedCornerShape(4.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         QrImage(text = state.uuid, modifier = Modifier.fillMaxSize())
@@ -110,30 +103,32 @@ fun LoginLinkingScreen(
 
                     Box(
                         modifier = Modifier
-                            .widthIn(max = 240.dp)
-                            .border(1.dp, Color.White.copy(alpha = 0.6f), RectangleShape)
-                            .background(Color.Black.copy(alpha = 0.4f))
+                            .width(IntrinsicSize.Max)
+                            .background(Color(0xFFBFC8CD).copy(alpha = 0.8f))
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = state.uuid,
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp,
+                            color = Color.Black,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = Color.Black,
+                                fontSize = 14.sp,
+                                letterSpacing = 2.sp
+                            ),
                             softWrap = true
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(15.dp))
 
                     Box(modifier = Modifier.focusRequester(focusRequester)) {
                         FilterButton(
                             text = if (state.isLoading) stringResource(R.string.linking_generating) else stringResource(R.string.linking_generate_new),
                             isActive = false,
                             onClick = { viewModel.loadQrAndListen() },
-                            fontSize = 20.sp
+                            fontSize = 14.sp,
+                            modifier = Modifier.height(40.dp)
                         )
                     }
                 }

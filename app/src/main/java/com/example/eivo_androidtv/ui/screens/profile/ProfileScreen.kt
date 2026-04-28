@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -16,9 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.tv.material3.*
 import coil.compose.AsyncImage
 import com.example.eivo_androidtv.R
@@ -120,18 +117,18 @@ fun ProfileScreen(
                                 Spacer(modifier = Modifier.height(40.dp))
 
                                 Text(
-                                    stringResource(R.string.profile_unlink_desc),
+                                    text = stringResource(R.string.profile_unlink_desc),
                                     color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
+
 
                                 var isUnlinkFocused by remember { mutableStateOf(false) }
                                 Box(
                                     modifier = Modifier
                                         .onFocusChanged { isUnlinkFocused = it.isFocused }
-                                        .border(2.dp, if (isUnlinkFocused) Color.White else Color.Transparent, RectangleShape)
+                                        .border(1.dp, if (isUnlinkFocused) Color.White else Color.Transparent, RectangleShape)
                                         .padding(4.dp)
                                 ) {
                                     Surface(
@@ -144,10 +141,10 @@ fun ProfileScreen(
                                         )
                                     ) {
                                         Text(
-                                            stringResource(R.string.profile_unlink_button),
+                                            text = stringResource(R.string.profile_unlink_button),
                                             color = Color.White,
-                                            fontSize = 14.sp,
-                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                                         )
                                     }
                                 }
@@ -159,10 +156,8 @@ fun ProfileScreen(
                             )
                         }
                     }
-
                 }
             }
-
         }
     }
 }
@@ -175,83 +170,103 @@ fun StatsSection(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(20.dp))
-        Text(stringResource(R.string.profile_available_for_me), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.profile_available_for_me),
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White))
         StatRow(stringResource(R.string.profile_stat_matchdays), jornadas.toString())
         StatRow(stringResource(R.string.profile_stat_summaries), eventos.toString())
     }
 }
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun SubscriptionCard(
     modifier: Modifier,
     user: UserDataDto?,
-    suscripcion: SuscripcionDto?) {
+    suscripcion: SuscripcionDto?
+) {
     Box(
         modifier = modifier
             .background(Color(0xFF1B1F27), RoundedCornerShape(8.dp))
             .padding(20.dp)
     ) {
         Column {
+            // Cabecera (Título y Email)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.profile_title), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(user?.email ?: "", color = Color.White, fontSize = 12.sp)
+                Text(
+                    text = stringResource(R.string.profile_title),
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = user?.email ?: "",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White))
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Contenido Principal
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+
+                verticalAlignment = Alignment.Top
             ) {
+                // Columna de Textos de suscripción
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        suscripcion?.nombre?.uppercase() ?: stringResource(R.string.profile_no_subscription),
+                        text = suscripcion?.nombre?.uppercase() ?: stringResource(R.string.profile_no_subscription),
                         color = Color.White,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp
+                        style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        suscripcion?.club ?: "",
+                        text = suscripcion?.club ?: "",
                         color = Color.White,
-                        fontSize = 14.sp
+                        style = MaterialTheme.typography.labelMedium
                     )
                     Text(
-                        suscripcion?.categoria ?: "",
+                        text = suscripcion?.categoria ?: "",
                         color = Color.White,
-                        fontSize = 14.sp
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
 
-                Spacer(modifier = Modifier.width(120.dp))
+                Spacer(modifier = Modifier.width(20.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .offset(y = (-10).dp)
+                ) {
+                    AsyncImage(
+                        model = suscripcion?.escudo,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(42.dp))
+            // Fecha "Desde el..."
             val fechaInicio = user?.start_sub_date?.substringBefore(" ") ?: stringResource(R.string.no_available)
             Text(
-                "Desde el $fechaInicio",
+                text = "Desde el $fechaInicio",
                 color = Color.White,
-                fontSize = 11.sp
+                style = MaterialTheme.typography.headlineMedium
             )
         }
-
-        AsyncImage(
-            model = suscripcion?.escudo,
-            contentDescription = null,
-            modifier = Modifier
-                .size(180.dp)
-                .align(Alignment.BottomEnd)
-                .padding(top = 28.dp, start = 20.dp),
-            error = null,
-            contentScale = ContentScale.Fit
-        )
     }
 }
 
@@ -259,12 +274,22 @@ fun SubscriptionCard(
 fun StatRow(label: String, value: String) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(label, color = Color.White, fontSize = 14.sp)
-            Text(value, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = label,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = value,
+                color = Color.White,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.05f)))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.White))
     }
 }
