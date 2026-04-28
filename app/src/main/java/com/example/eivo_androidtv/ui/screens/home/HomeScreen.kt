@@ -303,26 +303,37 @@ fun HeroBanner(
                             .padding(32.dp)
                             .fillMaxWidth(0.7f)
                     ) {
-                        // Título Destacado
-                        Text(
-                            text = data.nombre.uppercase(),
-                            color = Color.White,
-                            style = MaterialTheme.typography.displayMedium.copy(fontSize = 38.sp, lineHeight = 42.sp),
-                            maxLines = 3,
-                            overflow = Ellipsis
-                        )
-                        // Descripción
-                        Text(
-                            text = data.descripcion,
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
-                        )
-                        // Fecha
-                        Text(
-                            text = formatToLongDate(data.inicio),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
-                        )
+                        val baseTitleSize = 38.sp
+                        val dynamicTitleSize = if (data.nombre.length > 40) 28.sp else baseTitleSize
+                        Column(
+                            modifier = Modifier.weight(1f, fill = false),
+                            verticalArrangement = Arrangement.Bottom
+                        ) {
+                            // Título Destacado
+                            Text(
+                                text = data.nombre.uppercase(),
+                                color = Color.White,
+                                style = MaterialTheme.typography.displayMedium.copy(
+                                    fontSize = dynamicTitleSize,
+                                    lineHeight = dynamicTitleSize * 1.1f
+                                ),
+                                maxLines = 2,
+                                overflow = Ellipsis
+                            )
+                            // Descripción
+                            Text(
+                                text = data.descripcion,
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
+                                maxLines = 1
+                            )
+                            // Fecha
+                            Text(
+                                text = formatToLongDate(data.inicio),
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(20.dp))
 

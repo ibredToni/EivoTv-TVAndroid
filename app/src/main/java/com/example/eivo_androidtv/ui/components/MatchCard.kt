@@ -115,15 +115,24 @@ fun MatchCard(
 
                 // Información SUPERPUESTA
                 if (isFocused) {
+                    val fullText = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}"
+                    val baseStyle = MaterialTheme.typography.headlineSmall
+                    val adjustedFontSize = if (fullText.length > 25) 16.sp else baseStyle.fontSize
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(12.dp)
                     ) {
                         Text(
-                            text = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}",
+                            text = fullText,
                             color = Color.White,
-                            style = MaterialTheme.typography.headlineSmall
+                            style = baseStyle.copy(
+                                fontSize = adjustedFontSize,
+                                lineHeight = adjustedFontSize * 1.1f
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(

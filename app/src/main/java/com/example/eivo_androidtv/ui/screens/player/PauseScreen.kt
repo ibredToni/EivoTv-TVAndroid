@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.*
 import coil.compose.AsyncImage
@@ -25,6 +26,7 @@ import com.example.eivo_androidtv.R
 import com.example.eivo_androidtv.data.remote.dto.AdDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.ui.components.BackgroundFoci
+import com.example.eivo_androidtv.utils.formatToLongDate
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -52,6 +54,12 @@ fun PauseScreen(
 
     val formattedName = remember(detalle.nombre) {
         detalle.nombre?.replace(Regex("\\s*-\\s*"), "\n")?.uppercase() ?: ""
+    }
+    val titleStyle = MaterialTheme.typography.displayMedium
+    val dynamicFontSize = when {
+        formattedName.length > 30 -> titleStyle.fontSize * 0.7f
+        formattedName.length > 20 -> titleStyle.fontSize * 0.85f
+        else -> titleStyle.fontSize
     }
 
     LaunchedEffect(Unit) {
@@ -97,7 +105,7 @@ fun PauseScreen(
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(0.30f)
-                .padding(start = 20.dp, top = 40.dp, bottom = 40.dp)
+                .padding(start = 58.dp, top = 58.dp, bottom = 58.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -153,7 +161,13 @@ fun PauseScreen(
                     Text(
                         text = formattedName.uppercase(),
                         color = Color.White,
-                        style = MaterialTheme.typography.displayMedium
+                        style = titleStyle.copy(
+                            fontSize = dynamicFontSize,
+                            lineHeight = dynamicFontSize * 1.1f
+                        ),
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(Modifier.height(4.dp))
@@ -167,7 +181,7 @@ fun PauseScreen(
 
                     // Horario
                     Text(
-                        text = detalle.inicio ?: "",
+                        text = formatToLongDate(detalle.inicio) ?: "",
                         color = Color.White,
                         style = MaterialTheme.typography.bodySmall
                     )
