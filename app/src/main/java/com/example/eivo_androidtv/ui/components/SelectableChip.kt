@@ -43,7 +43,6 @@ fun SelectableChip(
     ) {
         Box(
             modifier = Modifier
-                .padding(4.dp)
                 .clip(CircleShape)
                 .background(if (isSelected) Color(0xFF505A73) else Color(0xFF202636))
                 .padding(horizontal = 20.dp, vertical = 4.dp),
