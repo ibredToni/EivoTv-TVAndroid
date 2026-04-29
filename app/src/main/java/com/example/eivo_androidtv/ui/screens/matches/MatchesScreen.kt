@@ -1,5 +1,6 @@
 package com.example.eivo_androidtv.ui.screens.matches
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +35,11 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 
 private val SpanishLocale = Locale.forLanguageTag("es-ES")
 
@@ -62,6 +68,7 @@ fun MatchesScreen(
     var errorOccurred by remember { mutableStateOf(false) }
     var isOffline by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
     val loadMatches = suspend {
         if (selectedRegion != null) {
@@ -122,7 +129,17 @@ fun MatchesScreen(
                     selectedItem = currentSportName,
                     onItemSelected = { nombre -> actualizarDeporte(nombre) },
                     onItemFocused = { nombre -> actualizarDeporte(nombre) },
-                    modifier = Modifier.weight(1f).fillMaxWidth(0.5f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(0.5f)
+                        .onPreviewKeyEvent { keyEvent ->
+                            if (keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown) {
+                                onBackPressedDispatcher?.onBackPressed()
+                                true
+                            } else {
+                                false
+                            }
+                        }
                 )
 
                 ProfileIcon(onNavigateToProfile = onNavigateToProfile)
