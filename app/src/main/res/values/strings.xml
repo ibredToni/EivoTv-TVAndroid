@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Eivo TV</string>
+    <string name="app_name">eivo TV</string>
     <string name="loading">Cargando...</string>
     <string name="ad_label">Ad</string>
     <string name="retry">REINTENTAR</string>
