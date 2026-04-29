@@ -35,6 +35,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
@@ -69,6 +70,18 @@ fun MatchesScreen(
     var isOffline by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    var focusedSportName by remember { mutableStateOf<String?>(null) }
+    val sportFocusRequesters = remember(sports) { List(sports.size) { FocusRequester() } }
+
+    val initialIndex = remember(sports, initialSport) {
+        val index = sports.indexOfFirst { it.id.toString() == initialSport }
+        if (index != -1) index else 0
+    }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100)
+        sportFocusRequesters[initialIndex].requestFocus()
+    }
 
     val loadMatches = suspend {
         if (selectedRegion != null) {
@@ -95,8 +108,8 @@ fun MatchesScreen(
     val actualizarDeporte = { nombre: String ->
         sports.find { it.nombre == nombre }?.let { deporte ->
             val newId = deporte.id.toString()
-
             if (currentSportId != newId) {
+                isLoading = true
                 currentSportId = newId
                 onSportSelected(newId)
                 onlyDirectos = false
@@ -106,6 +119,13 @@ fun MatchesScreen(
 
     LaunchedEffect(selectedRegion, onlyDirectos, filterClubId, selectedDate, currentSportId) {
         loadMatches()
+    }
+
+    LaunchedEffect(focusedSportName) {
+        focusedSportName?.let { nombre ->
+            kotlinx.coroutines.delay(300)
+            actualizarDeporte(nombre)
+        }
     }
 
     val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
@@ -127,8 +147,9 @@ fun MatchesScreen(
                 ChipGroup(
                     items = sports.map { it.nombre },
                     selectedItem = currentSportName,
+                    focusRequesters = sportFocusRequesters,
                     onItemSelected = { nombre -> actualizarDeporte(nombre) },
-                    onItemFocused = { nombre -> actualizarDeporte(nombre) },
+                    onItemFocused = { nombre -> focusedSportName = nombre },
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(0.5f)

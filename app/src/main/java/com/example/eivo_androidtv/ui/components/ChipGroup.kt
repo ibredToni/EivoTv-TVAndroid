@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 
 @Composable
 fun ChipGroup(
@@ -18,7 +21,9 @@ fun ChipGroup(
     selectedItem: String,
     onItemSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onItemFocused: ((String) -> Unit)? = null
+    onItemFocused: ((String) -> Unit)? = null,
+    focusRequesters: List<FocusRequester>? = null
+
 ) {
     val listState = rememberLazyListState()
 
@@ -34,12 +39,17 @@ fun ChipGroup(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            items(items) { item ->
+            itemsIndexed(items) { index, item ->
                 SelectableChip(
                     text = item,
                     isSelected = item == selectedItem,
                     onClick = { onItemSelected(item) },
-                    onFocus = { onItemFocused?.invoke(item) }
+                    onFocus = { onItemFocused?.invoke(item) },
+                    modifier = if (focusRequesters != null && index < focusRequesters.size) {
+                        Modifier.focusRequester(focusRequesters[index])
+                    } else {
+                        Modifier
+                    }
                 )
             }
         }
