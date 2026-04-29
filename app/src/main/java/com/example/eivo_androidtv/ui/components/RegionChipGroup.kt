@@ -30,7 +30,8 @@ fun RegionChipGroup(
                 RegionSelectableChip(
                     region = region,
                     isSelected = region.id == selectedRegion?.id,
-                    onClick = { onRegionSelected(region) }
+                    onClick = { onRegionSelected(region) },
+                    onFocus = { onRegionSelected(region) }
                 )
             }
         }

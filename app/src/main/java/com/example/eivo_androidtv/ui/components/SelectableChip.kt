@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,7 +22,8 @@ fun SelectableChip(
     text: String,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFocus: (() -> Unit)? = null
 ) {
     Surface(
         onClick = onClick,
@@ -39,7 +41,13 @@ fun SelectableChip(
                 shape = CircleShape
             )
         ),
-        modifier = modifier.padding(horizontal = 4.dp)
+        modifier = modifier
+            .padding(horizontal = 4.dp)
+            .onFocusChanged { focusState ->
+                if (focusState.isFocused) {
+                    onFocus?.invoke()
+                }
+            }
     ) {
         Box(
             modifier = Modifier

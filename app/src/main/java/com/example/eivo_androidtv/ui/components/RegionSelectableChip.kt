@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -30,7 +31,8 @@ import com.example.eivo_androidtv.R
 fun RegionSelectableChip(
     region: ComunidadDto,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onFocus: () -> Unit = {}
 ) {
     val flagRes = when {
         region.name.contains("Baleares", ignoreCase = true) -> R.drawable.baleares
@@ -51,6 +53,11 @@ fun RegionSelectableChip(
 
     Surface(
         onClick = onClick,
+        modifier = Modifier.onFocusChanged {
+            if (it.isFocused) {
+                onFocus()
+            }
+        },
         shape = ClickableSurfaceDefaults.shape(CircleShape),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         colors = ClickableSurfaceDefaults.colors(

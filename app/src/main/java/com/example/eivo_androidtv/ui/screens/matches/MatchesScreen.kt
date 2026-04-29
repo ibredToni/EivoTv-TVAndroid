@@ -85,6 +85,18 @@ fun MatchesScreen(
         }
     }
 
+    val actualizarDeporte = { nombre: String ->
+        sports.find { it.nombre == nombre }?.let { deporte ->
+            val newId = deporte.id.toString()
+
+            if (currentSportId != newId) {
+                currentSportId = newId
+                onSportSelected(newId)
+                onlyDirectos = false
+            }
+        }
+    }
+
     LaunchedEffect(selectedRegion, onlyDirectos, filterClubId, selectedDate, currentSportId) {
         loadMatches()
     }
@@ -108,14 +120,8 @@ fun MatchesScreen(
                 ChipGroup(
                     items = sports.map { it.nombre },
                     selectedItem = currentSportName,
-                    onItemSelected = { nombre ->
-                        sports.find { it.nombre == nombre }?.let { deporte ->
-                            val newId = deporte.id.toString()
-                            currentSportId = newId
-                            onSportSelected(newId)
-                            onlyDirectos = false
-                        }
-                    },
+                    onItemSelected = { nombre -> actualizarDeporte(nombre) },
+                    onItemFocused = { nombre -> actualizarDeporte(nombre) },
                     modifier = Modifier.weight(1f).fillMaxWidth(0.5f)
                 )
 

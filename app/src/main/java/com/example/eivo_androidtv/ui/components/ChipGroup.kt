@@ -17,7 +17,8 @@ fun ChipGroup(
     items: List<String>,
     selectedItem: String,
     onItemSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onItemFocused: ((String) -> Unit)? = null
 ) {
     val listState = rememberLazyListState()
 
@@ -37,7 +38,8 @@ fun ChipGroup(
                 SelectableChip(
                     text = item,
                     isSelected = item == selectedItem,
-                    onClick = { onItemSelected(item) }
+                    onClick = { onItemSelected(item) },
+                    onFocus = { onItemFocused?.invoke(item) }
                 )
             }
         }
