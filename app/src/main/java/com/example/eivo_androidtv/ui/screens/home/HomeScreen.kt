@@ -156,8 +156,7 @@ fun HomeScreen(
                                     onNavigateToPlayer(currentDestacado.id.toString(), currentDestacado.img)
                                 },
                                 onMoveDown = { sportsChipFocusRequester.requestFocus() },
-                                onMoveUp = { topBarFocusRequester.requestFocus() },
-                                token = token
+                                onMoveUp = { topBarFocusRequester.requestFocus() }
                             )
 
                             Spacer(modifier = Modifier.width(5.dp))
@@ -250,17 +249,45 @@ fun HeroBanner(
     onBannerClick: () -> Unit,
     onMoveDown: () -> Unit,
     onMoveUp: () -> Unit,
-    token: String = "",
 ) {
-    Box(modifier = modifier.fillMaxHeight()) {
+    val scope = rememberCoroutineScope()
+    var bannerHasFocus by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pagerState.currentPage, banners.size) {
+        if (banners.isNotEmpty()) {
+            kotlinx.coroutines.delay(5000)
+            val nextPage = (pagerState.currentPage + 1) % banners.size
+
+            if (bannerHasFocus) {
+                pagerState.animateScrollToPage(nextPage)
+            } else {
+                pagerState.scrollToPage(nextPage)
+            }
+        }
+    }
+
+    Box(modifier = modifier
+        .fillMaxHeight()
+        .onFocusChanged { bannerHasFocus = it.hasFocus }
+    ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            beyondViewportPageCount = 1,
-            userScrollEnabled = false
+            beyondViewportPageCount = 2,
+            userScrollEnabled = false,
+            key = { index -> if (index < banners.size) banners[index].id else index }
         ) { page ->
+            val isCurrentPage by remember { derivedStateOf { pagerState.currentPage == page } }
             val data = banners[page]
+            val buttonFocusRequester = remember { FocusRequester() }
             var isPageFocused by remember { mutableStateOf(false) }
+
+            LaunchedEffect(isCurrentPage) {
+                if (isCurrentPage && bannerHasFocus) {
+                    kotlinx.coroutines.delay(100)
+                    buttonFocusRequester.requestFocus()
+                }
+            }
 
             Surface(
                 modifier = Modifier.fillMaxSize().padding(1.dp),
@@ -278,7 +305,7 @@ fun HeroBanner(
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(data.img.trim())
-                            .crossfade(true)
+                            .crossfade(false)
                             .allowHardware(false)
                             .build(),
                         contentDescription = null,
@@ -339,13 +366,47 @@ fun HeroBanner(
 
                         Button(
                             onClick = onBannerClick,
+                            enabled = isCurrentPage,
                             modifier = Modifier
                                 .height(26.dp)
                                 .wrapContentWidth()
+                                .focusRequester(buttonFocusRequester)
                                 .onFocusChanged { state -> isPageFocused = state.isFocused }
                                 .onKeyEvent { event ->
                                     if (event.nativeKeyEvent.action == KeyEvent.ACTION_DOWN) {
                                         when (event.nativeKeyEvent.keyCode) {
+                                            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                                                scope.launch {
+                                                    val total = banners.size
+                                                    if (total > 0) {
+                                                        val next = (pagerState.currentPage + 1) % total
+                                                        // Si vamos al principio, mejor instantáneo para evitar el efecto "rebobinado"
+                                                        if (next == 0) pagerState.scrollToPage(0)
+                                                        else pagerState.animateScrollToPage(next)
+                                                    }
+                                                }
+                                                true
+                                            }
+                                            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                                                scope.launch {
+                                                    val total = banners.size
+                                                    if (total > 0) {
+                                                        // Calculamos el anterior de forma segura
+                                                        val prev = if (pagerState.currentPage > 0) pagerState.currentPage - 1 else total - 1
+
+                                                        // IMPORTANTE: Si es el salto del inicio al final, usamos scrollToPage
+                                                        // Pero para el resto, forzamos el índice exacto
+                                                        if (pagerState.currentPage == 0) {
+                                                            pagerState.scrollToPage(total - 1)
+                                                        } else {
+                                                            // Usamos scrollToPage aquí también si animate te sigue fallando,
+                                                            // ya que en TV es 100% fiable y no se cancela.
+                                                            pagerState.animateScrollToPage(prev)
+                                                        }
+                                                    }
+                                                }
+                                                true
+                                            }
                                             KeyEvent.KEYCODE_DPAD_DOWN -> { onMoveDown(); true }
                                             KeyEvent.KEYCODE_DPAD_UP -> { onMoveUp(); true }
                                             else -> false
