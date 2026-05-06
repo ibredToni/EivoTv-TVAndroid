@@ -107,6 +107,8 @@ fun HomeScreen(
     }
 
     EivoScreenContainer {
+        var focusedSportName by remember { mutableStateOf(selectedSportName) }
+
         when {
             isLoading || isInitialLoading -> {
                 Box(Modifier.fillMaxSize().focusable().focusRequester(remember { FocusRequester() }), contentAlignment = Alignment.Center) {
@@ -189,7 +191,22 @@ fun HomeScreen(
                                     onNavigateToMatches(it.id.toString())
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                            onItemFocused = { nombre ->
+                                focusedSportName = nombre
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 20.dp)
+                                .onKeyEvent { event ->
+                                    if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
+                                        event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+
+                                        sports.find { it.nombre == focusedSportName }?.let {
+                                            onNavigateToMatches(it.id.toString())
+                                        }
+                                        true
+                                    } else false
+                                }
                         )
                     }
                 }
