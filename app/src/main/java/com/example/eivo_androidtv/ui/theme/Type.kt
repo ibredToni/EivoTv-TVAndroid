@@ -44,6 +44,13 @@ val Typography = Typography(
         fontSize = 35.sp,
         lineHeight = 40.sp
     ),
+    //Botones
+    displaySmall = TextStyle(
+        fontFamily = SairaCondensed,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    ),
     // Títulos de Cards (MatchCard)
     headlineSmall = TextStyle(
         fontFamily = SairaExtraCondensed,

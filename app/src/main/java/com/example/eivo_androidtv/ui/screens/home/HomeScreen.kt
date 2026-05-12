@@ -41,6 +41,7 @@ import coil.decode.ImageDecoderDecoder
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import com.example.eivo_androidtv.ui.components.ConfirmationDialog
@@ -147,32 +148,42 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    Row(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         if (destacados.isNotEmpty()) {
                             HeroBanner(
                                 banners = destacados,
                                 pagerState = pagerState,
-                                modifier = Modifier.weight(0.70f).fillMaxHeight(),
+                                modifier = Modifier
+                                    .weight(0.75f)
+                                    .aspectRatio(16f / 9f),
                                 onBannerClick = {
                                     val currentDestacado = destacados[pagerState.currentPage]
                                     onNavigateToPlayer(currentDestacado.id.toString(), currentDestacado.img)
                                 },
                                 onMoveDown = { sportsChipFocusRequester.requestFocus() },
-                                onMoveUp = { topBarFocusRequester.requestFocus() }
+                                onMoveUp = { topBarFocusRequester.requestFocus() },
+                                apiService = apiService
                             )
 
-                            Spacer(modifier = Modifier.width(5.dp))
+                            //Spacer(modifier = Modifier.width(12.dp))
 
                             RightSidebar(
                                 destacados = destacados,
                                 ads = adsHome,
                                 currentPagerIndex = pagerState.currentPage,
-                                modifier = Modifier.weight(0.25f).fillMaxHeight(),
-                                token = token,
+                                modifier = Modifier
+                                    .weight(0.25f)
+                                    .fillMaxHeight(),
                                 onNextClick = { eventId ->
                                     val destacado = destacados.find { it.id.toString() == eventId }
                                     onNavigateToPlayer(eventId, destacado?.img)
-                                }
+                                },
+                                apiService = apiService
                             )
                         } else if (!isLoading) {
                             Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
@@ -242,7 +253,7 @@ fun HomeTopBar(
         Image(
             painter = painterResource(id = R.drawable.ic_eivo_logo),
             contentDescription = null,
-            modifier = Modifier.width(90.dp),
+            modifier = Modifier.width(120.dp),
             contentScale = ContentScale.Fit
         )
 
@@ -266,6 +277,7 @@ fun HeroBanner(
     onBannerClick: () -> Unit,
     onMoveDown: () -> Unit,
     onMoveUp: () -> Unit,
+    apiService: EivoApiService,
 ) {
     val scope = rememberCoroutineScope()
     var bannerHasFocus by remember { mutableStateOf(false) }
@@ -284,12 +296,13 @@ fun HeroBanner(
     }
 
     Box(modifier = modifier
-        .fillMaxHeight()
         .onFocusChanged { bannerHasFocus = it.hasFocus }
     ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f),
             beyondViewportPageCount = 2,
             userScrollEnabled = false,
             key = { index -> if (index < banners.size) banners[index].id else index }
@@ -298,6 +311,18 @@ fun HeroBanner(
             val data = banners[page]
             val buttonFocusRequester = remember { FocusRequester() }
             var isPageFocused by remember { mutableStateOf(false) }
+            var escudoLocal by remember(data.id) { mutableStateOf<String?>(null) }
+            var escudoVisitante by remember(data.id) { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(data.id) {
+                try {
+                    val detalle = apiService.fetchEventoDetalle(data.id.toString())
+                    escudoLocal = detalle.img_loc
+                    escudoVisitante = detalle.img_vis
+                } catch (e: Exception) {
+                    // Si falla, se quedan como null y no se muestran
+                }
+            }
 
             LaunchedEffect(isCurrentPage) {
                 if (isCurrentPage && bannerHasFocus) {
@@ -345,41 +370,63 @@ fun HeroBanner(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(32.dp)
-                            .fillMaxWidth(0.7f)
+                            .fillMaxWidth(0.7f),
+                        verticalArrangement = Arrangement.Bottom
                     ) {
-                        val baseTitleSize = 38.sp
-                        val dynamicTitleSize = if (data.nombre.length > 40) 28.sp else baseTitleSize
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .offset(y = 20.dp, x = (-10).dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (escudoLocal != null) {
+                                    AsyncImage(
+                                        model = escudoLocal,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(100.dp)
+                                    )
+                                }
+                                if (escudoVisitante != null) {
+                                    AsyncImage(
+                                        model = escudoVisitante,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(100.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        val baseTitleSize = 44.sp
                         Column(
-                            modifier = Modifier.weight(1f, fill = false),
-                            verticalArrangement = Arrangement.Bottom
+                            verticalArrangement = Arrangement.spacedBy((-8).dp)
                         ) {
                             // Título Destacado
                             Text(
                                 text = data.nombre.uppercase(),
                                 color = Color.White,
                                 style = MaterialTheme.typography.displayMedium.copy(
-                                    fontSize = dynamicTitleSize,
-                                    lineHeight = dynamicTitleSize * 1.1f
+                                    fontSize = baseTitleSize,
                                 ),
-                                maxLines = 2,
+                                maxLines = 1,
                                 overflow = Ellipsis
                             )
                             // Descripción
                             Text(
                                 text = data.descripcion,
                                 color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
                                 maxLines = 1
                             )
                             // Fecha
                             Text(
                                 text = formatToLongDate(data.inicio),
                                 color = Color.White,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp)
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
                             onClick = onBannerClick,
@@ -454,7 +501,7 @@ fun HeroBanner(
                             }
                         }
 
-                        Spacer(Modifier.height(20.dp))
+                        Spacer(Modifier.height(10.dp))
 
                         // Paginador (Dots)
                         Row(
@@ -504,8 +551,8 @@ fun RightSidebar(
     ads: List<AdDto>,
     currentPagerIndex: Int,
     modifier: Modifier,
-    token: String = "",
-    onNextClick: (String) -> Unit
+    onNextClick: (String) -> Unit,
+    apiService: EivoApiService,
 ) {
     val context = LocalContext.current
     val gifImageLoader = remember {
@@ -520,32 +567,89 @@ fun RightSidebar(
     val nextDestacado = destacados[nextDestacadoIndex]
     val ad1ToShow = remember(ads) { ads.filter { it.position == "home_1" }.let { if (it.isNotEmpty()) it.random() else null } }
     val ad2ToShow = remember(ads) { ads.filter { it.position == "home_2" }.let { if (it.isNotEmpty()) it.random() else null } }
+    var escudos by remember(nextDestacado.id) { mutableStateOf<Pair<String?, String?>>(null to null) }
 
-    Column(modifier = modifier.fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SidebarItem(
-            imageUrl = nextDestacado.img,
-            modifier = Modifier.weight(1.2f),
-            token = token,
-            imageLoader = gifImageLoader,
-            isClickable = true,
-            onClick = { onNextClick(nextDestacado.id.toString()) }
-        )
+    LaunchedEffect(nextDestacado.id) {
+        try {
+            val detalle = apiService.fetchEventoDetalle(nextDestacado.id.toString())
+            escudos = detalle.img_loc to detalle.img_vis
+        } catch (e: Exception) {
+            escudos = null to null
+        }
+    }
 
-        Spacer(modifier = Modifier.height(8.dp))
+    Column(
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            SidebarItem(
+                imageUrl = nextDestacado.img,
+                modifier = Modifier.fillMaxSize(),
+                imageLoader = gifImageLoader,
+                isClickable = true,
+                onClick = { onNextClick(nextDestacado.id.toString()) }
+            )
 
-        SidebarItem(
-            imageUrl = ad1ToShow?.url,
-            modifier = Modifier.weight(.9f).fillMaxSize(),
-            imageLoader = gifImageLoader,
-            isClickable = false
-        )
+            // Superposicion de escudos
+            if (escudos.first != null || escudos.second != null) {
+                Row(
 
-        SidebarItem(
-            imageUrl = ad2ToShow?.url,
-            modifier = Modifier.weight(.9f).fillMaxSize(),
-            imageLoader = gifImageLoader,
-            isClickable = false
-        )
+                    modifier = Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    escudos.first?.let {
+                        AsyncImage(
+                            model = it,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp)
+                        )
+                    }
+
+                    escudos.second?.let {
+                        AsyncImage(
+                            model = it,
+                            contentDescription = null,
+                            modifier = Modifier.size(80.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+        ) {
+            SidebarItem(
+                imageUrl = ad1ToShow?.url,
+                modifier = Modifier.fillMaxSize(),
+                imageLoader = gifImageLoader,
+                isClickable = false
+            )
+        }
+
+        // ESPACIO PEQUEÑO ENTRE ADS
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // ELEMENTO 3: Ad 2
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+        ) {
+            SidebarItem(
+                imageUrl = ad2ToShow?.url,
+                modifier = Modifier.fillMaxSize(),
+                imageLoader = gifImageLoader,
+                isClickable = false
+            )
+        }
     }
 }
 
@@ -563,7 +667,7 @@ fun SidebarItem(
     if (isClickable) {
         Surface(
             onClick = onClick,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier,
             scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
             shape = ClickableSurfaceDefaults.shape(RectangleShape),
             colors = ClickableSurfaceDefaults.colors(containerColor = Color.Transparent, focusedContainerColor = Color.Transparent),
@@ -593,7 +697,9 @@ fun SidebarImageContent(imageUrl: String?, imageRes: Int?, token: String, imageL
             .build(),
         imageLoader = imageLoader,
         contentDescription = null,
-        modifier = Modifier.fillMaxSize().background(Color.Black),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
         contentScale = ContentScale.Crop
     )
 }

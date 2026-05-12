@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,7 +68,8 @@ fun FilterButton(
                     text = text,
                     color = if (isActive) Color.Black else Color.White,
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = fontSize
+                        fontSize = fontSize,
+                        fontWeight = FontWeight.Normal
                     )
                 )
             }

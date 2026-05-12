@@ -49,16 +49,17 @@ fun MatchCard(
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused }
-            .padding(4.dp)
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
+                .height(115.dp)
                 .background(if (isFocused) Color.Black else Color.Transparent)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(if (isFocused) 1.1f else 1.6f)
+                    .weight(1f)
             ) {
                 // Fondo de la Card
                 AsyncImage(
@@ -78,50 +79,42 @@ fun MatchCard(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        contentAlignment = Alignment.CenterEnd
-                    ) {
+
                         AsyncImage(
                             model = match.img_loc,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize().scale(1.8f),
+                            modifier = Modifier.weight(.6f).fillMaxHeight().scale(1f),
                             contentScale = ContentScale.Fit,
-                            // AJUSTADO: alpha igual que el fondo (0.2f)
                             alpha = if (isFocused) 0.2f else 1f
                         )
-                    }
 
-                    Spacer(modifier = Modifier.width(30.dp))
 
-                    Box(
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
+                    Spacer(modifier = Modifier.width(16.dp))
+
+
                         AsyncImage(
                             model = match.img_vis,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize().scale(1.8f),
+                            modifier = Modifier.weight(.6f).fillMaxHeight().scale(1f),
                             contentScale = ContentScale.Fit,
-                            // AJUSTADO: alpha igual que el fondo (0.2f)
                             alpha = if (isFocused) 0.2f else 1f
                         )
-                    }
+
                 }
 
                 // Información SUPERPUESTA
                 if (isFocused) {
                     val fullText = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}"
                     val baseStyle = MaterialTheme.typography.headlineSmall
-                    val adjustedFontSize = if (fullText.length > 25) 16.sp else baseStyle.fontSize
+                    val adjustedFontSize = 16.sp
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(12.dp)
+                            .padding(8.dp)
                     ) {
                         Text(
                             text = fullText,
@@ -138,7 +131,7 @@ fun MatchCard(
                         Text(
                             text = match.descripcion,
                             color = Color.White,
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -156,19 +149,19 @@ fun MatchCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp)
+                        .padding(top = 2.dp, bottom = 4.dp)
                 ) {
                     Text(
                         text = match.descripcion,
                         color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = formatToTime(match.inicio),
                         color = Color.White,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp)
                     )
                 }
             }

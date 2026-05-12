@@ -9,5 +9,7 @@ data class DestacadoDto(
     val descripcion: String,
     val inicio: String,
     val fin: String,
-    val img: String
+    val img: String,
+    var img_loc: String? = null,
+    var img_vis: String? = null
 )

@@ -2,11 +2,18 @@ package com.example.eivo_androidtv.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.tv.material3.MaterialTheme
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Border
@@ -42,7 +49,7 @@ fun RegionSelectableChip(
     }
 
     val shortName = when {
-        region.name.contains("Baleares", true) -> "BAL"
+        region.name.contains("Baleares", true) -> "IB"
         region.name.contains("Madrid", true) -> "MAD"
         region.name.contains("Valencia", true) -> "VAL"
         else -> region.name.take(3).uppercase()
@@ -51,9 +58,22 @@ fun RegionSelectableChip(
     val selectedColor = Color(0xFFA2A7B5)
     val defaultColor = Color(0xFF202636)
 
+    var isFocused by remember { mutableStateOf(false) }
+
+    val backgroundColor = if (isFocused) {
+        defaultColor
+    } else if (isSelected) {
+        selectedColor
+    } else {
+        defaultColor
+    }
+
     Surface(
         onClick = onClick,
-        modifier = Modifier.onFocusChanged {
+        modifier = Modifier
+            .width(85.dp)
+            .height(28.dp)
+            .onFocusChanged {
             if (it.isFocused) {
                 onFocus()
             }
@@ -61,8 +81,9 @@ fun RegionSelectableChip(
         shape = ClickableSurfaceDefaults.shape(CircleShape),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (isSelected) selectedColor else defaultColor,
-            focusedContainerColor = if (isSelected) selectedColor else defaultColor
+            containerColor = backgroundColor,
+            focusedContainerColor = defaultColor,
+            pressedContainerColor = defaultColor
         ),
         border = ClickableSurfaceDefaults.border(
             focusedBorder = Border(
@@ -73,26 +94,25 @@ fun RegionSelectableChip(
         )
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
             if (flagRes != null) {
                 Image(
                     painter = painterResource(id = flagRes),
                     contentDescription = null,
                     modifier = Modifier
-                        // Ajustado el ancho a 34dp para que se vea más alargado
-                        .size(width = 34.dp, height = 24.dp)
+                        .size(width = 38.dp, height = 28.dp)
                         .clip(RectangleShape),
                     contentScale = ContentScale.Crop
                 )
             }
             Text(
                 text = shortName,
-                // Subimos un poco el padding horizontal (10dp) para estirar el chip
-                modifier = Modifier.padding(horizontal = 10.dp),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                modifier = Modifier.padding(start = 6.dp),
+                style = MaterialTheme.typography.displaySmall,
+                color = Color.White,
+                maxLines = 1
             )
         }
     }

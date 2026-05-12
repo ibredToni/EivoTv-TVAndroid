@@ -41,6 +41,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 
 private val SpanishLocale = Locale.forLanguageTag("es-ES")
 
@@ -141,7 +144,7 @@ fun MatchesScreen(
                 Image(
                     painter = painterResource(id = R.drawable.ic_eivo_logo),
                     contentDescription = null,
-                    modifier = Modifier.width(80.dp)
+                    modifier = Modifier.width(120.dp)
                 )
 
                 ChipGroup(
@@ -209,9 +212,9 @@ fun MatchesScreen(
                     else -> {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(5),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(32.dp),
-                            contentPadding = PaddingValues(bottom = 48.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            contentPadding = PaddingValues(bottom = 5.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(matches) { match ->
@@ -254,7 +257,8 @@ fun FilterSecondaryBar(
             isActive = onlyDirectos,
             showLiveDot = !onlyDirectos,
             onClick = onToggleDirectos,
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.fillMaxHeight(),
+            fontSize = 16.sp
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -315,7 +319,7 @@ fun FilterSecondaryBar(
                         Text(
                             text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale),
                             color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal, fontSize = 17.sp),
                             maxLines = 1
                         )
                     }
@@ -331,7 +335,8 @@ fun FilterSecondaryBar(
             text = if (hasClubFilter) stringResource(R.string.matches_view_all_clubs) else stringResource(R.string.matches_choose_club),
             isActive = hasClubFilter,
             onClick = { if (hasClubFilter) onClearClubFilter() else onNavigateToClubSelection() },
-            modifier = Modifier.fillMaxHeight()
+            modifier = Modifier.fillMaxHeight(),
+            fontSize = 16.sp
         )
     }
 }
@@ -350,11 +355,18 @@ fun DateLabel(date: LocalDate, isSelected: Boolean) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "$dayName ${date.dayOfMonth}",
+            text = buildAnnotatedString {
+                append(dayName)
+                append(" ")
+
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append("${date.dayOfMonth}")
+                }
+            },
             color = if (isSelected) Color.White else Color.Gray,
             style = MaterialTheme.typography.headlineSmall.copy(
-                fontSize = 17.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Normal
             ),
             maxLines = 1
         )
