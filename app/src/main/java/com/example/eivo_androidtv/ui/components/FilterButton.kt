@@ -24,7 +24,8 @@ fun FilterButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     showLiveDot: Boolean = false,
-    fontSize: TextUnit = 14.sp
+    fontSize: TextUnit = 14.sp,
+    width: Modifier = Modifier.width(180.dp)
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
@@ -47,7 +48,7 @@ fun FilterButton(
                 focusedContainerColor = if (isActive) Color(0xFFC0C0C0) else Color(0xFF151920)
             ),
             modifier = Modifier
-                .width(180.dp)
+                .then(width)
                 .fillMaxHeight()
         ) {
             Row(

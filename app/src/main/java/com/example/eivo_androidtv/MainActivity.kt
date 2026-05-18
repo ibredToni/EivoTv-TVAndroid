@@ -203,7 +203,6 @@ fun AppNavigation() {
                 MatchesScreen(
                     initialSport = if (globalSportId.isNotEmpty()) globalSportId else sportIdFromRoute,
                     selectedRegion = globalRegion,
-                    onRegionSelected = { globalRegion = it },
                     filterClubId = selectedClubId,
                     apiService = apiService,
                     sports = globalSports,

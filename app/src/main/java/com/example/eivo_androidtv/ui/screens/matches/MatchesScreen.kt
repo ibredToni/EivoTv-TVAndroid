@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,13 +27,13 @@ import com.example.eivo_androidtv.data.remote.dto.ComunidadDto
 import com.example.eivo_androidtv.data.remote.dto.DeporteDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.ui.components.*
-import com.example.eivo_androidtv.utils.formatToTime
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
@@ -52,7 +50,6 @@ private val SpanishLocale = Locale.forLanguageTag("es-ES")
 fun MatchesScreen(
     initialSport: String,
     selectedRegion: ComunidadDto?,
-    onRegionSelected: (ComunidadDto) -> Unit,
     filterClubId: String? = null,
     onNavigateToClubSelection: () -> Unit,
     onNavigateToPlayer: (String, String?) -> Unit,
@@ -75,6 +72,7 @@ fun MatchesScreen(
     val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     var focusedSportName by remember { mutableStateOf<String?>(null) }
     val sportFocusRequesters = remember(sports) { List(sports.size) { FocusRequester() } }
+    val deportesFocusRequester = remember { FocusRequester() }
 
     val initialIndex = remember(sports, initialSport) {
         val index = sports.indexOfFirst { it.id.toString() == initialSport }
@@ -134,7 +132,10 @@ fun MatchesScreen(
     val currentSportName = sports.find { it.id.toString() == currentSportId }?.nombre ?: ""
 
     EivoScreenContainer {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 48.dp)
+        ) {
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
@@ -156,6 +157,7 @@ fun MatchesScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(0.5f)
+                        .focusRequester(deportesFocusRequester)
                         .onPreviewKeyEvent { keyEvent ->
                             if (keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown) {
                                 onBackPressedDispatcher?.onBackPressed()
@@ -179,7 +181,8 @@ fun MatchesScreen(
                 onDateChange = {
                     selectedDate = it
                     onDateSelected(it)
-                }
+                },
+                deportesFocusRequester = deportesFocusRequester,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -215,7 +218,11 @@ fun MatchesScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                             contentPadding = PaddingValues(bottom = 5.dp),
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .focusProperties {
+                                    up = deportesFocusRequester
+                                }
                         ) {
                             items(matches) { match ->
                                 MatchCard(
@@ -234,6 +241,7 @@ fun MatchesScreen(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun FilterSecondaryBar(
+    deportesFocusRequester: FocusRequester,
     onNavigateToClubSelection: () -> Unit,
     filterClub: String?,
     onClearClubFilter: () -> Unit,
@@ -246,10 +254,15 @@ fun FilterSecondaryBar(
     var isDateGroupFocused by remember { mutableStateOf(false) }
     var isMonthGroupFocused by remember { mutableStateOf(false) }
     val barHeight = 42.dp
+    val spacing = 12.dp
 
     Row(
-        modifier = Modifier.fillMaxWidth().height(barHeight),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(barHeight)
+            .focusProperties { up = deportesFocusRequester },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(spacing)
     ) {
         // BOTÓN IZQUIERDA
         FilterButton(
@@ -257,86 +270,90 @@ fun FilterSecondaryBar(
             isActive = onlyDirectos,
             showLiveDot = !onlyDirectos,
             onClick = onToggleDirectos,
-            modifier = Modifier.fillMaxHeight(),
-            fontSize = 16.sp
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            fontSize = 16.sp,
+            width = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxHeight()
+        Box(
+            modifier = Modifier
+                .weight(2.05f)
+                .fillMaxHeight()
+                .onFocusChanged { isDateGroupFocused = it.isFocused }
+                .border(
+                    width = if (isDateGroupFocused) 2.dp else 0.dp,
+                    color = if (isDateGroupFocused) Color.White else Color.Transparent,
+                    shape = RectangleShape
+                )
         ) {
-            // GRUPO DE DÍAS: Replicamos estructura de FilterButton (Box -> Border -> Padding 4dp)
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .onFocusChanged { isDateGroupFocused = it.isFocused }
-                    .border(
-                        width = 2.dp,
-                        color = if (isDateGroupFocused) Color.White else Color.Transparent,
-                        shape = RectangleShape
-                    )
-                    .padding(4.dp) // <--- ESTO es lo que iguala la altura con el FilterButton
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxSize().background(Color(0xFF151920)).padding(4.dp)
             ) {
+                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxHeight().background(Color(0xFF151920))
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusDays(1)) }
                     DateLabel(date = selectedDate.minusDays(1), isSelected = false)
                     DateLabel(date = selectedDate, isSelected = true)
                     DateLabel(date = selectedDate.plusDays(1), isSelected = false)
-                    IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
                 }
-            }
-
-            // GRUPO DE MES: Replicamos estructura
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .onFocusChanged { isMonthGroupFocused = it.isFocused }
-                    .border(
-                        width = 2.dp,
-                        color = if (isMonthGroupFocused) Color.White else Color.Transparent,
-                        shape = RectangleShape
-                    )
-                    .padding(4.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxHeight().background(Color(0xFF151920))
-                ) {
-                    IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
-                    Box(
-                        modifier = Modifier
-                            .width(110.dp)
-                            .background(Color(0xFF2A2F37))
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale),
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal, fontSize = 17.sp),
-                            maxLines = 1
-                        )
-                    }
-                    IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
-                }
+                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusDays(1)) }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        // GRUPO DE MES
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .offset(x = 2.dp)
+                .onFocusChanged { isMonthGroupFocused = it.isFocused }
+                .border(
+                    width = if (isMonthGroupFocused) 2.dp else 0.dp,
+                    color = if (isMonthGroupFocused) Color.White else Color.Transparent,
+                    shape = RectangleShape
+                )
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF151920))
+                    .padding(4.dp)
+            ) {
+                IconButtonArrow(R.drawable.ic_arrow_left) { onDateChange(selectedDate.minusMonths(1)) }
+                Box(
+                    modifier = Modifier.weight(1f).background(Color(0xFF2A2F37)).fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = selectedDate.month.getDisplayName(TextStyle.FULL, SpanishLocale).uppercase(SpanishLocale),
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp
+                        ),
+                        maxLines = 1,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                IconButtonArrow(R.drawable.ic_arrow_right) { onDateChange(selectedDate.plusMonths(1)) }
+            }
+        }
 
         // BOTÓN DERECHA
         FilterButton(
             text = if (hasClubFilter) stringResource(R.string.matches_view_all_clubs) else stringResource(R.string.matches_choose_club),
             isActive = hasClubFilter,
             onClick = { if (hasClubFilter) onClearClubFilter() else onNavigateToClubSelection() },
-            modifier = Modifier.fillMaxHeight(),
-            fontSize = 16.sp
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            fontSize = 16.sp,
+            width = Modifier.fillMaxWidth(),
         )
     }
 }

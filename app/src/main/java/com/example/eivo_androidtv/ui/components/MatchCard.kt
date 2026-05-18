@@ -35,31 +35,30 @@ fun MatchCard(
     val nombreLocal = equipos.getOrNull(0) ?: "Local"
     val nombreVisitante = equipos.getOrNull(1) ?: "Visitante"
 
-    Surface(
-        onClick = onClick,
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
-        shape = ClickableSurfaceDefaults.shape(RectangleShape),
-        border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(BorderStroke(3.dp, Color.White))
-        ),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.Transparent,
-            focusedContainerColor = Color(0xFF151920)
-        ),
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .onFocusChanged { isFocused = it.isFocused }
+            .padding(bottom = 3.dp)
     ) {
-        Column(
+        Surface(
+            onClick = onClick,
+            scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+            shape = ClickableSurfaceDefaults.shape(RectangleShape),
+            border = ClickableSurfaceDefaults.border(
+                focusedBorder = Border(BorderStroke(3.dp, Color.White))
+            ),
+            colors = ClickableSurfaceDefaults.colors(
+                containerColor = Color.Transparent,
+                focusedContainerColor = Color.Black
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(115.dp)
-                .background(if (isFocused) Color.Black else Color.Transparent)
+                .onFocusChanged { isFocused = it.isFocused }
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(IntrinsicSize.Min)
             ) {
                 // Fondo de la Card
                 AsyncImage(
@@ -71,98 +70,88 @@ fun MatchCard(
                         .build(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                    alpha = if (isFocused) 0.2f else 1f
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (isFocused) Modifier.matchParentSize()
+                            else Modifier.aspectRatio(16f / 9f)
+                        ),
+                    alpha = if (isFocused) 0.3f else 1f
                 )
 
                 // Contenedor de logos centrales
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                        .fillMaxWidth()
+                        .then(
+                            if (isFocused) Modifier.matchParentSize()
+                            else Modifier.aspectRatio(16f / 9f)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         AsyncImage(
                             model = match.img_loc,
                             contentDescription = null,
-                            modifier = Modifier.weight(.6f).fillMaxHeight().scale(1f),
+                            modifier = Modifier.weight(0.5f).fillMaxHeight(0.6f),
                             contentScale = ContentScale.Fit,
-                            alpha = if (isFocused) 0.2f else 1f
+                            alpha = if (isFocused) 0.3f else 1f
                         )
-
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-
+                        Spacer(modifier = Modifier.width(12.dp))
                         AsyncImage(
                             model = match.img_vis,
                             contentDescription = null,
-                            modifier = Modifier.weight(.6f).fillMaxHeight().scale(1f),
+                            modifier = Modifier.weight(0.5f).fillMaxHeight(0.6f),
                             contentScale = ContentScale.Fit,
-                            alpha = if (isFocused) 0.2f else 1f
+                            alpha = if (isFocused) 0.3f else 1f
                         )
-
+                    }
                 }
 
                 // Información SUPERPUESTA
-                if (isFocused) {
-                    val fullText = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}"
-                    val baseStyle = MaterialTheme.typography.headlineSmall
-                    val adjustedFontSize = 16.sp
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Box(modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+                        if (isFocused) {
+                            Text(
+                                text = "${nombreLocal.uppercase()}\n${nombreVisitante.uppercase()}",
+                                color = Color.White,
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 16.sp
+                                ),
+                                modifier = Modifier.padding(8.dp).align(Alignment.TopStart)
+                            )
+                        }
+                    }
+
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text(
-                            text = fullText,
-                            color = Color.White,
-                            style = baseStyle.copy(
-                                fontSize = adjustedFontSize,
-                                lineHeight = adjustedFontSize * 1.1f
-                            ),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = match.descripcion,
                             color = Color.White,
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = formatToTime(match.inicio),
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = Color.White.copy(alpha = 0.9f),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp)
                         )
                     }
-                }
-            }
-
-            // Información INFERIOR
-            if (!isFocused) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 2.dp, bottom = 4.dp)
-                ) {
-                    Text(
-                        text = match.descripcion,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.sp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = formatToTime(match.inicio),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp)
-                    )
                 }
             }
         }

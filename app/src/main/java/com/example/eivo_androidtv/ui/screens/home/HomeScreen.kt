@@ -81,9 +81,12 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     var showExitDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val screenCreationTime = remember { System.currentTimeMillis() }
 
     BackHandler(enabled = !showExitDialog) {
-        showExitDialog = true
+        if (System.currentTimeMillis() - screenCreationTime > 500) {
+            showExitDialog = true
+        }
     }
 
     val loadData = suspend {
@@ -192,7 +195,13 @@ fun HomeScreen(
                         }
                     }
 
-                    Box(modifier = Modifier.focusRequester(sportsChipFocusRequester)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                            .focusRequester(sportsChipFocusRequester),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         ChipGroup(
                             items = sports.map { it.nombre },
                             selectedItem = selectedSportName,
@@ -207,7 +216,6 @@ fun HomeScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 20.dp)
                                 .onKeyEvent { event ->
                                     if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
                                         event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
