@@ -42,6 +42,7 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import com.example.eivo_androidtv.ui.components.ConfirmationDialog
@@ -216,6 +217,7 @@ fun HomeScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .focusRestorer()
                                 .onKeyEvent { event ->
                                     if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
                                         event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {

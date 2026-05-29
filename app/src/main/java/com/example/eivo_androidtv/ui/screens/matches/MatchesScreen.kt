@@ -34,6 +34,7 @@ import java.util.Locale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
@@ -158,6 +159,7 @@ fun MatchesScreen(
                         .weight(1f)
                         .fillMaxWidth(0.5f)
                         .focusRequester(deportesFocusRequester)
+                        .focusRestorer()
                         .onPreviewKeyEvent { keyEvent ->
                             if (keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown) {
                                 onBackPressedDispatcher?.onBackPressed()
