@@ -1,5 +1,6 @@
 package com.example.eivo_androidtv
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,11 +43,27 @@ import com.example.eivo_androidtv.utils.Constants
 import com.example.eivo_androidtv.utils.NetworkModule
 import java.time.LocalDate
 import androidx.tv.material3.MaterialTheme
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val intentFlow = MutableStateFlow<Intent?>(null)
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                android.util.Log.e("EIVO_FCM", "TOKEN ACTUAL RECUPERADO: ${task.result}")
+            } else {
+                android.util.Log.e("EIVO_FCM", "Error al recuperar el token de Firebase", task.exception)
+            }
+        }
+
+        intentFlow.value = intent
 
         setContent {
             Eivo_androidtvTheme {
@@ -58,19 +75,45 @@ class MainActivity : ComponentActivity() {
                         contentColor = Color.White
                     )
                 ) {
-                    AppNavigation()
+                    AppNavigation(intentFlow = intentFlow)
                 }
             }
         }
     }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intentFlow.value = intent
+    }
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(intentFlow: StateFlow<Intent?>) {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
     var showSplash by remember { mutableStateOf(true) }
 
+    LaunchedEffect(navController) {
+        intentFlow.collect { intent ->
+            intent?.data?.let { uri ->
+                if (uri.scheme == "eivotv" && uri.host == "player") {
+                    val eventId = uri.lastPathSegment
+                    if (!eventId.isNullOrEmpty() && !showSplash) {
+
+                        navController.navigate(Screen.Player.createRoute(eventId, null)) {
+                            launchSingleTop = true
+
+                            popUpTo(Screen.Home.route) {
+                                inclusive = false
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
 
     if (showSplash) {
         SplashScreen(
@@ -106,6 +149,23 @@ fun AppNavigation() {
         LaunchedEffect(currentToken) {
             if (!currentToken.isNullOrEmpty() && globalRegions.isEmpty()) {
                 isInitialDataLoading = true
+
+                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val fcmToken = task.result
+                        val deviceScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
+                        deviceScope.launch {
+                            try {
+                                val payload = com.example.eivo_androidtv.data.remote.dto.DeviceTokenDto(fcmToken = fcmToken)
+                                apiService.registerDeviceToken(payload)
+                                android.util.Log.i("EIVO_FCM", "FCM token asociado al usuario con éxito en el backend.")
+                            } catch (e: Exception) {
+                                android.util.Log.e("EIVO_FCM", "Error al asociar el token tras el login: ${e.message}")
+                            }
+                        }
+                    }
+                }
+
                 try {
                     val fetchedRegions = apiService.fetchComunidades()
                     globalRegions = fetchedRegions

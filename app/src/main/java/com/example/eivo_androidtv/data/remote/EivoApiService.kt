@@ -23,6 +23,11 @@ import com.example.eivo_androidtv.data.remote.dto.EventoDetalleDto
 import com.example.eivo_androidtv.data.remote.dto.EventoDto
 import com.example.eivo_androidtv.data.remote.dto.ProfileResponseDto
 import com.example.eivo_androidtv.utils.Constants
+import com.example.eivo_androidtv.data.remote.dto.DeviceTokenDto
+import kotlinx.serialization.encodeToString
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaType
+
 
 class EivoApiService(private val client: OkHttpClient, private val baseUrl: String) {
 
@@ -250,6 +255,25 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
 
             val list = json.decodeFromString<List<EventoDetalleDto>>(bodyString)
             list.first()
+        }
+    }
+
+    suspend fun registerDeviceToken(deviceTokenDto: DeviceTokenDto): Unit = withContext(Dispatchers.IO) {
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+        val jsonBody = json.encodeToString(deviceTokenDto)
+        val requestBody = jsonBody.toRequestBody(mediaType)
+
+        val request = Request.Builder()
+            .url("$baseUrl${Constants.ENDPOINT_REGISTER_FCM}")
+            .post(requestBody)
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw IOException("Error registering FCM token: ${response.code}")
+            }
         }
     }
 }

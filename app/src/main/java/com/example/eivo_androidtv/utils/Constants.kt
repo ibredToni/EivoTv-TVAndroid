@@ -18,6 +18,7 @@ object Constants {
     const val ENDPOINT_ADVERTS = "$TV_V1/adTv/all"
     const val ENDPOINT_PERFIL = "$TV_V1/user/profile"
     const val ENDPOINT_DESTACADOS = "$TV_V1/destacados/all"
+    const val ENDPOINT_REGISTER_FCM = "$TV_V1/devices/tv-register"
 
     // Endpoints con parámetros dinámicos
     const val PATH_CLUBS = "$TV_V1/clubs" // Ejemplo: /tv/v1/clubs/{idDeporte}

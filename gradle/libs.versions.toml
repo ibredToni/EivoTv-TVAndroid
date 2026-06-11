@@ -17,6 +17,8 @@ zxing = "3.5.3"
 coil = "2.6.0"
 exo_player = "1.2.0"
 okhttp = "1.2.0"
+firebaseBom = "33.1.0"
+googleServices = "4.4.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,10 +46,13 @@ exo-player = { group = "androidx.media3", name = "media3-exoplayer", version.ref
 exo-player-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "exo_player" }
 exo-player-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "exo_player" }
 okhttp = { group = "androidx.media3", name = "media3-datasource-okhttp", version.ref = "okhttp" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 
