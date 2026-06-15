@@ -45,8 +45,16 @@ import java.time.LocalDate
 import androidx.tv.material3.MaterialTheme
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.app.KeyguardManager
+import android.content.Context
+import android.os.Build
+import android.view.WindowManager
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import android.provider.Settings
+import android.net.Uri
+import android.widget.Toast
 
 class MainActivity : ComponentActivity() {
     private val intentFlow = MutableStateFlow<Intent?>(null)
@@ -64,6 +72,23 @@ class MainActivity : ComponentActivity() {
         }
 
         intentFlow.value = intent
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+
+        checkSystemAlertWindowPermission()
 
         setContent {
             Eivo_androidtvTheme {
@@ -85,31 +110,63 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         intentFlow.value = intent
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+    }
+
+    private fun checkSystemAlertWindowPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!android.provider.Settings.canDrawOverlays(this)) {
+
+                android.widget.Toast.makeText(
+                    this,
+                    "Por favor, activa el permiso para permitir que el reproductor se abra de forma remota.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+
+                val intent = Intent(
+                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            }
+        }
     }
 }
 
 @Composable
-fun AppNavigation(intentFlow: StateFlow<Intent?>) {
+fun AppNavigation(intentFlow: MutableStateFlow<Intent?>) {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
-    var showSplash by remember { mutableStateOf(true) }
+    val initialIntent = intentFlow.value
+    val isDeepLinkLaunch = initialIntent?.data?.let { uri ->
+        uri.scheme == "eivotv" && uri.host == "player"
+    } ?: false
 
-    LaunchedEffect(navController) {
+    var showSplash by remember { mutableStateOf(!isDeepLinkLaunch) }
+    val sessionManager = remember { SessionManager(context) }
+    var currentToken by remember { mutableStateOf(sessionManager.fetchAuthToken()) }
+
+    LaunchedEffect(intentFlow) {
         intentFlow.collect { intent ->
-            intent?.data?.let { uri ->
-                if (uri.scheme == "eivotv" && uri.host == "player") {
-                    val eventId = uri.lastPathSegment
-                    if (!eventId.isNullOrEmpty() && !showSplash) {
-
-                        navController.navigate(Screen.Player.createRoute(eventId, null)) {
-                            launchSingleTop = true
-
-                            popUpTo(Screen.Home.route) {
-                                inclusive = false
-                            }
-                        }
-
-                    }
+            val uri = intent?.data
+            if (uri != null && uri.scheme == "eivotv" && uri.host == "player") {
+                if (!showSplash) {
+                    navController.handleDeepLink(intent)
+                    intentFlow.value = null // Limpieza segura
                 }
             }
         }
@@ -149,22 +206,6 @@ fun AppNavigation(intentFlow: StateFlow<Intent?>) {
         LaunchedEffect(currentToken) {
             if (!currentToken.isNullOrEmpty() && globalRegions.isEmpty()) {
                 isInitialDataLoading = true
-
-                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        val fcmToken = task.result
-                        val deviceScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO)
-                        deviceScope.launch {
-                            try {
-                                val payload = com.example.eivo_androidtv.data.remote.dto.DeviceTokenDto(fcmToken = fcmToken)
-                                apiService.registerDeviceToken(payload)
-                                android.util.Log.i("EIVO_FCM", "FCM token asociado al usuario con éxito en el backend.")
-                            } catch (e: Exception) {
-                                android.util.Log.e("EIVO_FCM", "Error al asociar el token tras el login: ${e.message}")
-                            }
-                        }
-                    }
-                }
 
                 try {
                     val fetchedRegions = apiService.fetchComunidades()
@@ -210,10 +251,28 @@ fun AppNavigation(intentFlow: StateFlow<Intent?>) {
                     LinkingViewModel(getQrUseCase, listenUseCase, sessionManager)
                 }
 
+                val coroutineScope = rememberCoroutineScope()
+
                 LoginLinkingScreen(
                     viewModel = linkingViewModel,
                     onNavigateToHome = {
                         currentToken = sessionManager.fetchAuthToken()
+
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val fcmToken = task.result
+                                coroutineScope.launch(Dispatchers.IO) {
+                                    try {
+                                        val payload = com.example.eivo_androidtv.data.remote.dto.DeviceTokenDto(fcmToken = fcmToken)
+                                        apiService.registerDeviceToken(payload)
+                                        android.util.Log.i("EIVO_FCM", "FCM token asociado al usuario con éxito tras Login.")
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("EIVO_FCM", "Error al asociar el token: ${e.message}")
+                                    }
+                                }
+                            }
+                        }
+
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Linking.route) { inclusive = true }
                         }
@@ -318,9 +377,27 @@ fun AppNavigation(intentFlow: StateFlow<Intent?>) {
                 )
             }
 
-            composable(Screen.Player.route) { backStackEntry ->
+            composable(
+                route = Screen.Player.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("eventId") {
+                        type = androidx.navigation.NavType.StringType
+                    },
+                    androidx.navigation.navArgument("backgroundImage") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                ),
+                deepLinks = listOf(
+                    androidx.navigation.navDeepLink {
+                        uriPattern = "eivotv://player/{eventId}"
+                    }
+                )
+            ) { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
                 val backgroundImage = backStackEntry.arguments?.getString("backgroundImage")
+
                 PlayerScreen(
                     eventId = eventId,
                     backgroundImage = backgroundImage,
