@@ -196,10 +196,11 @@ class EivoApiService(private val client: OkHttpClient, private val baseUrl: Stri
         }
     }
 
-    suspend fun fetchDestacados(): List<DestacadoDto> = withContext(Dispatchers.IO) {
+    suspend fun fetchDestacados(communityId: String): List<DestacadoDto> = withContext(Dispatchers.IO) {
         val request = Request.Builder()
             .url("$baseUrl${Constants.ENDPOINT_DESTACADOS}")
             .header("Accept", "application/json")
+            .header("community", communityId)
             .build()
 
         client.newCall(request).execute().use { response ->

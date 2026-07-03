@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -54,10 +55,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import android.provider.Settings
 import android.net.Uri
-import android.widget.Toast
+import com.example.eivo_androidtv.ui.components.ConfirmationDialog
+import kotlinx.coroutines.flow.StateFlow
 
 class MainActivity : ComponentActivity() {
     private val intentFlow = MutableStateFlow<Intent?>(null)
+    private val overlayPermissionNeeded = MutableStateFlow(false)
 
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,7 +91,7 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        checkSystemAlertWindowPermission()
+        overlayPermissionNeeded.value = !hasOverlayPermission()
 
         setContent {
             Eivo_androidtvTheme {
@@ -100,10 +103,19 @@ class MainActivity : ComponentActivity() {
                         contentColor = Color.White
                     )
                 ) {
-                    AppNavigation(intentFlow = intentFlow)
+                    AppNavigation(
+                        intentFlow = intentFlow,
+                        overlayPermissionNeeded = overlayPermissionNeeded,
+                        onRequestOverlayPermission = { requestOverlayPermission() }
+                    )
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        overlayPermissionNeeded.value = !hasOverlayPermission()
     }
 
     override fun onNewIntent(intent: android.content.Intent) {
@@ -127,28 +139,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkSystemAlertWindowPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!android.provider.Settings.canDrawOverlays(this)) {
+    private fun hasOverlayPermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
 
-                android.widget.Toast.makeText(
-                    this,
-                    "Por favor, activa el permiso para permitir que el reproductor se abra de forma remota.",
-                    android.widget.Toast.LENGTH_LONG
-                ).show()
-
-                val intent = Intent(
-                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
+    private fun requestOverlayPermission() {
+        try {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            if (intent.resolveActivity(packageManager) != null) {
                 startActivity(intent)
+            } else {
+                android.util.Log.w("EIVO_PERMISSIONS", "Este dispositivo no soporta ACTION_MANAGE_OVERLAY_PERMISSION")
             }
+        } catch (e: Exception) {
+            android.util.Log.w("EIVO_PERMISSIONS", "No se pudo abrir el ajuste de superposición", e)
         }
     }
 }
 
 @Composable
-fun AppNavigation(intentFlow: MutableStateFlow<Intent?>) {
+fun AppNavigation(
+    intentFlow: MutableStateFlow<Intent?>,
+    overlayPermissionNeeded: StateFlow<Boolean>,
+    onRequestOverlayPermission: () -> Unit
+) {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
     val initialIntent = intentFlow.value
@@ -157,6 +173,12 @@ fun AppNavigation(intentFlow: MutableStateFlow<Intent?>) {
     } ?: false
 
     var showSplash by remember { mutableStateOf(!isDeepLinkLaunch) }
+    val needsOverlayPermission by overlayPermissionNeeded.collectAsState()
+    var showOverlayPermissionDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(needsOverlayPermission, showSplash) {
+        showOverlayPermissionDialog = needsOverlayPermission && !showSplash
+    }
     val sessionManager = remember { SessionManager(context) }
     var currentToken by remember { mutableStateOf(sessionManager.fetchAuthToken()) }
 
@@ -405,6 +427,19 @@ fun AppNavigation(intentFlow: MutableStateFlow<Intent?>) {
                     onBack = { navController.popBackStack() }
                 )
             }
+        }
+
+        if (showOverlayPermissionDialog) {
+            ConfirmationDialog(
+                title = "Para que el reproductor pueda abrirse automáticamente al recibir una notificación con la app en segundo plano, activa el permiso \"Mostrar sobre otras apps\" en los ajustes del sistema.",
+                confirmText = "Activar",
+                dismissText = "Ahora no",
+                onConfirm = {
+                    showOverlayPermissionDialog = false
+                    onRequestOverlayPermission()
+                },
+                onDismiss = { showOverlayPermissionDialog = false }
+            )
         }
     }
 }

@@ -90,16 +90,17 @@ fun HomeScreen(
         }
     }
 
-    val loadData = suspend {
+    val loadData: suspend (String) -> Unit = { communityId ->
         isLoading = true
         errorOccurred = false
         isOffline = false
         try {
-            destacados = apiService.fetchDestacados()
+            destacados = apiService.fetchDestacados(communityId)
             val adsDeferred = apiService.fetchAdverts()
             val posicionesValidas = listOf("home_1", "home_2")
             adsHome = adsDeferred.filter { it.position in posicionesValidas }
         } catch (e: Exception) {
+            android.util.Log.e("EIVO_HOME", "Error cargando destacados/anuncios", e)
             isOffline = (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.io.IOException)
             errorOccurred = true
         } finally {
@@ -107,15 +108,15 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        loadData()
+    LaunchedEffect(selectedRegion) {
+        selectedRegion?.let { loadData(it.id.toString()) }
     }
 
     EivoScreenContainer {
         var focusedSportName by remember { mutableStateOf(selectedSportName) }
 
         when {
-            isLoading || isInitialLoading -> {
+            isInitialLoading -> {
                 Box(Modifier.fillMaxSize().focusable().focusRequester(remember { FocusRequester() }), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = Color.White)
                 }
@@ -124,7 +125,7 @@ fun HomeScreen(
             errorOccurred -> {
                 ErrorStateComponent(
                     isOffline = isOffline,
-                    onRetry = { scope.launch { loadData() } }
+                    onRetry = { selectedRegion?.let { region -> scope.launch { loadData(region.id.toString()) } } }
                 )
             }
 
@@ -158,7 +159,11 @@ fun HomeScreen(
                             .padding(horizontal = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        if (destacados.isNotEmpty()) {
+                        if (isLoading) {
+                            Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = Color.White)
+                            }
+                        } else if (destacados.isNotEmpty()) {
                             HeroBanner(
                                 banners = destacados,
                                 pagerState = pagerState,
@@ -189,7 +194,7 @@ fun HomeScreen(
                                 },
                                 apiService = apiService
                             )
-                        } else if (!isLoading) {
+                        } else {
                             Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
                                 Text(stringResource(R.string.no_featured_content), color = Color.Gray)
                             }
