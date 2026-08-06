@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.eivo_androidtv"
+    namespace = "com.eivotv.androidtv"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.eivo_androidtv"
+        applicationId = "com.eivotv.androidtv"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
@@ -39,7 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://web.eivotv.es\"")
+            buildConfigField("String", "BASE_URL", "\"https://webtest.eivotv.com\"")
         }
     }
     compileOptions {

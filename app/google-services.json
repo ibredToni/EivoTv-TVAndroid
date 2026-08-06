@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "186871602117",
-    "project_id": "eivotv-aba",
-    "storage_bucket": "eivotv-aba.firebasestorage.app"
+    "project_number": "365817889891",
+    "project_id": "eivo-web-test",
+    "storage_bucket": "eivo-web-test.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:186871602117:android:ed4b9abd644560368489ac",
+        "mobilesdk_app_id": "1:365817889891:android:8bbefd330e609bc51a6456",
         "android_client_info": {
-          "package_name": "com.example.eivo_androidtv"
+          "package_name": "com.eivotv.androidtv"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBtYdkNPu1lqf22pOl0jolQE16L_tsvYYA"
+          "current_key": "AIzaSyAKrfYQYayWdefKjlwM45Z0LH4PRI1vx-w"
         }
       ],
       "services": {
