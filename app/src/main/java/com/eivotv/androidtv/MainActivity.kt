@@ -260,9 +260,14 @@ fun AppNavigation(
                 }
             }
         }
+        // Se calcula una sola vez: si dependiera de currentToken, al hacer login se
+        // reconstruiría el grafo y Home se crearía dos veces
+        val startDestination = remember {
+            if (currentToken.isNullOrEmpty()) Screen.Linking.route else Screen.Home.route
+        }
         NavHost(
             navController = navController,
-            startDestination = if (currentToken.isNullOrEmpty()) Screen.Linking.route else Screen.Home.route
+            startDestination = startDestination
         ) {
             composable(Screen.Linking.route) {
                 val repository = remember { AuthRepositoryImpl(apiService) }

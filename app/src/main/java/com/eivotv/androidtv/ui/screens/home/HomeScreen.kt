@@ -99,6 +99,9 @@ fun HomeScreen(
             val adsDeferred = apiService.fetchAdverts()
             val posicionesValidas = listOf("home_1", "home_2")
             adsHome = adsDeferred.filter { it.position in posicionesValidas }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // Carga cancelada (cambio de región o salida de la pantalla): no es un error
+            throw e
         } catch (e: Exception) {
             android.util.Log.e("EIVO_HOME", "Error cargando destacados/anuncios", e)
             isOffline = (e is java.net.UnknownHostException || e is java.net.ConnectException || e is java.io.IOException)
