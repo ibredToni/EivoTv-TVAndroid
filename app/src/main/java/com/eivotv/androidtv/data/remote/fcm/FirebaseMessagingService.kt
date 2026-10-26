@@ -11,6 +11,7 @@ import com.eivotv.androidtv.data.remote.EivoApiService
 import com.eivotv.androidtv.data.remote.dto.DeviceTokenDto
 import com.eivotv.androidtv.utils.Constants
 import com.eivotv.androidtv.utils.NetworkModule
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,30 +20,43 @@ import kotlinx.coroutines.launch
 import android.app.ActivityOptions
 
 class FirebaseMessagingService : com.google.firebase.messaging.FirebaseMessagingService() {
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     companion object {
         private const val TAG = "EIVO_FCM"
+
+        // Scope de proceso: el registro no debe cancelarse al salir de la pantalla que lo lanza
+        private val registerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        /** Obtiene el token FCM actual y lo asocia al usuario logueado en el servidor. */
+        fun syncDeviceToken(context: Context) {
+            val appContext = context.applicationContext
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    registerDeviceToken(appContext, task.result)
+                } else {
+                    Log.e(TAG, "Error al recuperar el token de Firebase", task.exception)
+                }
+            }
+        }
+
+        private fun registerDeviceToken(context: Context, fcmToken: String) {
+            val sessionManager = SessionManager(context)
+            if (sessionManager.fetchAuthToken().isNullOrEmpty()) return
+            val client = NetworkModule.createOkHttpClient(sessionManager)
+            val apiService = EivoApiService(client = client, baseUrl = Constants.BASE_URL)
+            registerScope.launch {
+                try {
+                    apiService.registerDeviceToken(DeviceTokenDto(fcmToken = fcmToken))
+                    Log.i(TAG, "FCM token asociado al usuario con éxito.")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to register token: ${e.message}")
+                }
+            }
+        }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        val sessionManager = SessionManager(applicationContext)
-        val authToken = sessionManager.fetchAuthToken()
-        registerDeviceToken(token, authToken)
-    }
-
-    private fun registerDeviceToken(fcmToken: String, authToken: String?) {
-        if (authToken.isNullOrEmpty()) return
-        val client = NetworkModule.createOkHttpClient(SessionManager(applicationContext))
-        val apiService = EivoApiService(client = client, baseUrl = Constants.BASE_URL)
-        serviceScope.launch {
-            try {
-                apiService.registerDeviceToken(DeviceTokenDto(fcmToken = fcmToken))
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to register token: ${e.message}")
-            }
-        }
+        registerDeviceToken(applicationContext, token)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {

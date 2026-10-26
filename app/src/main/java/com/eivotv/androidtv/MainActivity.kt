@@ -44,7 +44,6 @@ import com.eivotv.androidtv.utils.Constants
 import com.eivotv.androidtv.utils.NetworkModule
 import java.time.LocalDate
 import androidx.tv.material3.MaterialTheme
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import android.app.KeyguardManager
@@ -66,13 +65,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                android.util.Log.e("EIVO_FCM", "TOKEN ACTUAL RECUPERADO: ${task.result}")
-            } else {
-                android.util.Log.e("EIVO_FCM", "Error al recuperar el token de Firebase", task.exception)
-            }
-        }
+        // Si ya hay sesión, re-asociamos el token en cada arranque (cubre sesiones previas y tokens rotados)
+        com.eivotv.androidtv.data.remote.fcm.FirebaseMessagingService.syncDeviceToken(this)
 
         intentFlow.value = intent
 
@@ -278,27 +272,12 @@ fun AppNavigation(
                     LinkingViewModel(getQrUseCase, listenUseCase, sessionManager)
                 }
 
-                val coroutineScope = rememberCoroutineScope()
-
                 LoginLinkingScreen(
                     viewModel = linkingViewModel,
                     onNavigateToHome = {
                         currentToken = sessionManager.fetchAuthToken()
 
-                        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                val fcmToken = task.result
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    try {
-                                        val payload = com.eivotv.androidtv.data.remote.dto.DeviceTokenDto(fcmToken = fcmToken)
-                                        apiService.registerDeviceToken(payload)
-                                        android.util.Log.i("EIVO_FCM", "FCM token asociado al usuario con éxito tras Login.")
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("EIVO_FCM", "Error al asociar el token: ${e.message}")
-                                    }
-                                }
-                            }
-                        }
+                        com.eivotv.androidtv.data.remote.fcm.FirebaseMessagingService.syncDeviceToken(context)
 
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Linking.route) { inclusive = true }
