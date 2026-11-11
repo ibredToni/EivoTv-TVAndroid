@@ -11,8 +11,8 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.eivotv.androidtv"
-        minSdk = 23
+        applicationId = "com.eivotv.tveivo"
+        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -39,7 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://webtest.eivotv.com\"")
+            buildConfigField("String", "BASE_URL", "\"https://web.eivotv.es\"")
         }
     }
     compileOptions {
